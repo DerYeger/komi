@@ -13,6 +13,7 @@ import androidx.ui.graphics.SolidColor
 import androidx.ui.layout.*
 import androidx.ui.material.Button
 import androidx.ui.material.ButtonStyle
+import androidx.ui.material.Divider
 import androidx.ui.material.surface.Surface
 import androidx.ui.text.TextStyle
 import androidx.ui.tooling.preview.Preview
@@ -47,7 +48,7 @@ fun DefaultPreview() {
 
 @Composable
 fun CellView(game: Game, cell: Cell) {
-    Container(modifier = Height(20.dp)) {
+    Container(modifier = Size(50.dp, 50.dp)) {
         Button(
             text = "",
             onClick = { game.turn(cell) },
@@ -64,14 +65,19 @@ fun CellView(game: Game, cell: Cell) {
 fun Board(game: Game = Game()) {
     Column(modifier = ExpandedHeight) {
         PlayerCard(game.players.first)
+        Divider(height = 5.dp)
         PlayerCard(game.players.second)
-        for (row in game.cellArray) {
-            Row(modifier = ExpandedWidth) {
-                for (cell in row) {
-                    CellView(game = game, cell = cell)
+        Divider(height = 5.dp)
+        Column {
+            for (row in game.cellArray) {
+                Row(modifier = ExpandedWidth) {
+                    for (cell in row) {
+                        CellView(game = game, cell = cell)
+                    }
                 }
             }
         }
+        Divider(height = 5.dp)
         CurrentPlayerCard(game = game)
     }
 }
