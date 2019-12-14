@@ -5,7 +5,7 @@ import androidx.ui.graphics.Color
 
 @Model
 class Game(
-    val players: Pair<Player, Player> = Pair(Player.Black, Player.White),
+    val players: Pair<Player, Player> = Pair(Player.Black(), Player.White()),
     val cellArray: Array<Array<Cell>> = Array(5) { y ->
         Array(5) { x -> Cell(x = x, y = y, state = CellState.Empty) }
     }
@@ -94,8 +94,8 @@ class Player(
 ) {
     companion object {
         val None = Player(name = "None", color = Color.Transparent, score = 0)
-        val Black = Player(name = "Black", color = Color.Black, score = 0)
-        val White = Player(name = "White", color = Color.White, score = 0)
+        fun Black() = Player(name = "Black", color = Color.Black, score = 0)
+        fun White() = Player(name = "White", color = Color.White, score = 0)
     }
 }
 
