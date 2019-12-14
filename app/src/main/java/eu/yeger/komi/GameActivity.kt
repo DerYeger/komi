@@ -3,6 +3,7 @@ package eu.yeger.komi
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.Composable
+import androidx.ui.core.Alignment
 import androidx.ui.core.Text
 import androidx.ui.core.dp
 import androidx.ui.core.setContent
@@ -97,9 +98,9 @@ fun WinnerCard(game: Game) {
 @Composable
 fun Board(game: Game) {
     ElevatedCard {
-        Column {
+        Table(columns = game.width, alignment = { Alignment.Center }) {
             for (row in game.cellArray) {
-                Row {
+                tableRow {
                     for (cell in row) {
                         CellView(game = game, cell = cell)
                     }
