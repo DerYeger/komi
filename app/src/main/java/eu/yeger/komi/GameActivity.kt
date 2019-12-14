@@ -8,12 +8,13 @@ import androidx.ui.core.dp
 import androidx.ui.core.setContent
 import androidx.ui.foundation.shape.border.Border
 import androidx.ui.foundation.shape.corner.CircleShape
+import androidx.ui.foundation.shape.corner.RoundedCornerShape
 import androidx.ui.graphics.Color
 import androidx.ui.graphics.SolidColor
 import androidx.ui.layout.*
 import androidx.ui.material.Button
 import androidx.ui.material.ButtonStyle
-import androidx.ui.material.Divider
+import androidx.ui.material.surface.Card
 import androidx.ui.text.TextStyle
 import androidx.ui.tooling.preview.Preview
 
@@ -42,10 +43,12 @@ fun DefaultPreview() {
 @Composable
 fun Board(game: Game = Game()) {
     Column(modifier = ExpandedHeight) {
-        PlayerCard(game.players.first)
-        Divider(height = 5.dp)
-        PlayerCard(game.players.second)
-        Divider(height = 5.dp)
+        Row {
+            PlayerCard(game.players.first)
+            WidthSpacer(width = 8.dp)
+            PlayerCard(game.players.second)
+        }
+        HeightSpacer(height = 8.dp)
         Column {
             for (row in game.cellArray) {
                 Row(modifier = ExpandedWidth) {
@@ -55,16 +58,18 @@ fun Board(game: Game = Game()) {
                 }
             }
         }
-        Divider(height = 5.dp)
+        HeightSpacer(height = 8.dp)
         CurrentPlayerCard(game = game)
     }
 }
 
 @Composable
 fun PlayerCard(player: Player) {
-    Row {
-        Text(text = player.name)
-        Text(text = " Score: ${player.score}")
+    val style = TextStyle(color = player.color)
+    Card(shape = RoundedCornerShape(4.dp), elevation = 8.dp, modifier = Spacing(4.dp)) {
+        Padding(padding = 4.dp) {
+            Text(text = "${player.name} Score: ${player.score}", style = style)
+        }
     }
 }
 
@@ -78,15 +83,17 @@ fun CurrentPlayerCard(game: Game) {
 
 @Composable
 fun CellView(game: Game, cell: Cell) {
-    Container(modifier = Size(50.dp, 50.dp)) {
-        Button(
-            text = "",
-            onClick = { game.turn(cell) },
-            style = ButtonStyle(
-                color = cell.state.color,
-                shape = CircleShape,
-                border = Border(brush = SolidColor(Color.Black), width = 1.dp)
+    Card {
+        Container(modifier = Size(50.dp, 50.dp), expanded = true) {
+            Button(
+                text = "",
+                onClick = { game.turn(cell) },
+                style = ButtonStyle(
+                    color = cell.state.color,
+                    shape = CircleShape,
+                    border = Border(brush = SolidColor(Color.Black), width = 1.dp)
+                )
             )
-        )
+        }
     }
 }
