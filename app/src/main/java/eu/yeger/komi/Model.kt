@@ -8,13 +8,16 @@ class Game(
     val players: Pair<Player, Player> = Pair(Player.Black(), Player.White()),
     val cellArray: Array<Array<Cell>> = Array(5) { y ->
         Array(5) { x -> Cell(x = x, y = y, state = CellState.Empty) }
-    }
-
+    },
+    val scoreLimit: Int = 9
 ) {
     private val cells = cellArray.flatten()
-    var currentPlayer: Player
-
     private val neighborMap = HashMap<Cell, List<Cell>>()
+
+    var gameOver = false
+    var winner: Player? = null
+
+    var currentPlayer: Player
 
     init {
         // workaround for compiler backend exception
@@ -31,7 +34,7 @@ class Game(
     }
 
     private fun turnIsValid(cell: Cell): Boolean {
-        if (cell.isOccupied()) return false
+        if (cell.isOccupied() || gameOver) return false
         return true
     }
 
@@ -40,9 +43,13 @@ class Game(
         cells
             .filter { it in cellsToClear }
             .forEach {
-                it.state.player.opponent().score++
+                player.score++
                 it.state = CellState.Empty
             }
+        if (player.score >= scoreLimit) {
+            gameOver = true
+            winner = player
+        }
     }
 
     private fun Player.opponent() = when (this) {

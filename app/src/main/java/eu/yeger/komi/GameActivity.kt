@@ -27,13 +27,6 @@ class GameActivity : AppCompatActivity() {
     }
 }
 
-@Composable
-fun GamePage() {
-    ThemedPage {
-        Board()
-    }
-}
-
 @Preview("Game Screen")
 @Composable
 fun DefaultPreview() {
@@ -41,14 +34,80 @@ fun DefaultPreview() {
 }
 
 @Composable
-fun Board(game: Game = Game()) {
-    Column(modifier = ExpandedHeight) {
-        Row {
-            PlayerCard(game.players.first)
-            WidthSpacer(width = 8.dp)
-            PlayerCard(game.players.second)
+fun GamePage(game: Game = Game()) {
+    ThemedPage {
+        Padding(padding = 8.dp) {
+            Column(modifier = ExpandedHeight) {
+                PlayerCards(game)
+                HeightSpacer(height = 8.dp)
+                Board(game)
+                HeightSpacer(height = 8.dp)
+                CurrentPlayerCard(game = game)
+                HeightSpacer(height = 8.dp)
+                WinnerCard(game = game)
+            }
         }
-        HeightSpacer(height = 8.dp)
+    }
+}
+
+@Composable
+fun PlayerCards(game: Game) {
+    Row {
+        PlayerCard(game.players.first)
+        WidthSpacer(width = 8.dp)
+        PlayerCard(game.players.second)
+    }
+}
+
+
+@Composable
+fun ElevatedCard(children: @Composable() () -> Unit) {
+    Card(shape = RoundedCornerShape(4.dp), elevation = 8.dp, modifier = Spacing(4.dp)) {
+        Padding(padding = 4.dp) {
+            children()
+        }
+    }
+}
+
+@Composable
+fun PlayerCard(player: Player) {
+    ElevatedCard {
+        Text(
+            text = "${player.name} Score: ${player.score}",
+            style = TextStyle(color = player.color)
+        )
+    }
+}
+
+@Composable
+fun CurrentPlayerCard(game: Game) {
+    ElevatedCard {
+        Row {
+            Text(text = "Current Player: ")
+            Text(
+                text = game.currentPlayer.name,
+                style = TextStyle(color = game.currentPlayer.color)
+            )
+        }
+    }
+}
+
+@Composable
+fun WinnerCard(game: Game) {
+    ElevatedCard {
+        Row {
+            Text(text = "Winner: ")
+            Text(
+                text = game.winner?.name ?: "",
+                style = TextStyle(color = game.winner?.color ?: Color.Transparent)
+            )
+        }
+    }
+}
+
+@Composable
+fun Board(game: Game) {
+    ElevatedCard {
         Column {
             for (row in game.cellArray) {
                 Row(modifier = ExpandedWidth) {
@@ -58,42 +117,20 @@ fun Board(game: Game = Game()) {
                 }
             }
         }
-        HeightSpacer(height = 8.dp)
-        CurrentPlayerCard(game = game)
-    }
-}
-
-@Composable
-fun PlayerCard(player: Player) {
-    val style = TextStyle(color = player.color)
-    Card(shape = RoundedCornerShape(4.dp), elevation = 8.dp, modifier = Spacing(4.dp)) {
-        Padding(padding = 4.dp) {
-            Text(text = "${player.name} Score: ${player.score}", style = style)
-        }
-    }
-}
-
-@Composable
-fun CurrentPlayerCard(game: Game) {
-    Row {
-        Text(text = "Current Player: ")
-        Text(text = game.currentPlayer.name, style = TextStyle(color = game.currentPlayer.color))
     }
 }
 
 @Composable
 fun CellView(game: Game, cell: Cell) {
-    Card {
-        Container(modifier = Size(50.dp, 50.dp), expanded = true) {
-            Button(
-                text = "",
-                onClick = { game.turn(cell) },
-                style = ButtonStyle(
-                    color = cell.state.color,
-                    shape = CircleShape,
-                    border = Border(brush = SolidColor(Color.Black), width = 1.dp)
-                )
+    Container(modifier = Size(50.dp, 50.dp), expanded = true) {
+        Button(
+            text = "",
+            onClick = { game.turn(cell) },
+            style = ButtonStyle(
+                color = cell.state.color,
+                shape = CircleShape,
+                border = Border(brush = SolidColor(Color.Black), width = 1.dp)
             )
-        }
+        )
     }
 }
