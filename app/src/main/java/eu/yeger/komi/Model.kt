@@ -6,11 +6,13 @@ import androidx.ui.graphics.Color
 @Model
 class Game(
     val players: Pair<Player, Player> = Pair(Player.Black(), Player.White()),
-    val cellArray: Array<Array<Cell>> = Array(5) { y ->
-        Array(5) { x -> Cell(x = x, y = y, state = CellState.Empty) }
-    },
+    val width: Int = 5,
+    val height: Int = 5,
     val scoreLimit: Int = 9
 ) {
+    val cellArray = Array(height) { y ->
+        Array(width) { x -> Cell(x = x, y = y, state = CellState.Empty) }
+    }
     private val cells = cellArray.flatten()
     private val neighborMap = HashMap<Cell, List<Cell>>()
 
