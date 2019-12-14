@@ -8,13 +8,11 @@ import androidx.ui.core.dp
 import androidx.ui.core.setContent
 import androidx.ui.foundation.shape.border.Border
 import androidx.ui.foundation.shape.corner.CircleShape
-import androidx.ui.foundation.shape.corner.RoundedCornerShape
 import androidx.ui.graphics.Color
 import androidx.ui.graphics.SolidColor
 import androidx.ui.layout.*
 import androidx.ui.material.Button
 import androidx.ui.material.ButtonStyle
-import androidx.ui.material.surface.Card
 import androidx.ui.text.TextStyle
 import androidx.ui.tooling.preview.Preview
 
@@ -36,7 +34,7 @@ fun DefaultPreview() {
 @Composable
 fun GamePage(game: Game = Game()) {
     ThemedPage {
-        Padding(padding = 8.dp) {
+        Center {
             Column(modifier = ExpandedHeight) {
                 PlayerCards(game)
                 HeightSpacer(height = 8.dp)
@@ -50,22 +48,13 @@ fun GamePage(game: Game = Game()) {
     }
 }
 
+
 @Composable
 fun PlayerCards(game: Game) {
     Row {
         PlayerCard(game.players.first)
         WidthSpacer(width = 8.dp)
         PlayerCard(game.players.second)
-    }
-}
-
-
-@Composable
-fun ElevatedCard(children: @Composable() () -> Unit) {
-    Card(shape = RoundedCornerShape(4.dp), elevation = 8.dp, modifier = Spacing(4.dp)) {
-        Padding(padding = 4.dp) {
-            children()
-        }
     }
 }
 
@@ -110,7 +99,7 @@ fun Board(game: Game) {
     ElevatedCard {
         Column {
             for (row in game.cellArray) {
-                Row(modifier = ExpandedWidth) {
+                Row {
                     for (cell in row) {
                         CellView(game = game, cell = cell)
                     }
@@ -122,7 +111,7 @@ fun Board(game: Game) {
 
 @Composable
 fun CellView(game: Game, cell: Cell) {
-    Container(modifier = Size(50.dp, 50.dp), expanded = true) {
+    Container(modifier = Size(50.dp, 50.dp)) {
         Button(
             text = "",
             onClick = { game.turn(cell) },
