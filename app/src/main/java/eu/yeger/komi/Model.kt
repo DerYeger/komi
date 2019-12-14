@@ -12,7 +12,7 @@ class Game(
 
 ) {
     private val cells = cellArray.flatten()
-    var currentPlayer: Player? = null
+    var currentPlayer: Player
 
     private val neighborMap = HashMap<Cell, List<Cell>>()
 
@@ -23,31 +23,46 @@ class Game(
 
     fun turn(cell: Cell) {
         if (turnIsValid(cell)) {
-            cell.state = CellState.Occupied(currentPlayer!!)
-            val cellsWithoutLiberties = cellsWithoutLiberties()
-            cells
-                .filter { it in cellsWithoutLiberties }
-                .forEach {
-                    it.state.player.opponent().score++
-                    it.state = CellState.Empty
-                }
-
-            currentPlayer = currentPlayer?.opponent()
+            cell.state = CellState.Occupied(currentPlayer)
+            turnForPlayer(currentPlayer)
+            turnForPlayer(currentPlayer.opponent())
+            currentPlayer = currentPlayer.opponent()
         }
     }
 
-    private fun cellsWithoutLiberties(): List<Cell> {
+    private fun turnIsValid(cell: Cell): Boolean {
+        if (cell.isOccupied()) return false
+        return true
+    }
+
+    private fun turnForPlayer(player: Player) {
+        val cellsToClear = player.opponent().cellsWithoutLiberties()
+        cells
+            .filter { it in cellsToClear }
+            .forEach {
+                it.state.player.opponent().score++
+                it.state = CellState.Empty
+            }
+    }
+
+    private fun Player.opponent() = when (this) {
+        players.first -> players.second
+        players.second -> players.first
+        else -> Player.None
+    }
+
+    private fun Player.cellsWithoutLiberties(): List<Cell> {
         val safeCells = cells
-            .filter { it.isOccupied() && it.hasEmptyNeighbor() }
+            .filter { it.state.player === this && it.hasEmptyNeighbor() }
             .toMutableSet() // collect occupied cells with empty neighbors, as those are inherently safe
 
         val uncheckedCells = cells
-            .filter { it.isOccupied() && !it.hasEmptyNeighbor() }
+            .filter { it.state.player === this && !it.hasEmptyNeighbor() }
             .toMutableSet() // collect occupied cells without empty neighbors
 
         while (true) {
             val transitiveSafeCells = uncheckedCells
-                .filter { safeCells.any { safeCell -> safeCell.grantsLibertyTo(it) } }
+                .filter { safeCells.any { safeCell -> safeCell.liberates(it) } }
                 .toSet()
 
             if (transitiveSafeCells.isEmpty()) {
@@ -59,30 +74,15 @@ class Game(
         }
     }
 
-    private fun Cell.grantsLibertyTo(other: Cell) = when (state) {
-        CellState.Empty -> false
-        else -> neighbors().contains(other) && state.player === other.state.player
+    private fun Cell.neighbors() = neighborMap.computeIfAbsent(this) {
+        cells.filter { it.isNeighborOf(this) }
     }
 
     private fun Cell.hasEmptyNeighbor() = neighbors().any { it.isEmpty() }
 
-    private fun turnIsValid(cell: Cell): Boolean {
-        if (cell.isOccupied()) return false
-
-        val neighbors = cell.neighbors()
-        if (neighbors.all { it.state.player === this.currentPlayer?.opponent() }) return false
-
-        return true
-    }
-
-    private fun Player.opponent() = when (this) {
-        players.first -> players.second
-        players.second -> players.first
-        else -> Player.None
-    }
-
-    private fun Cell.neighbors() = neighborMap.computeIfAbsent(this) {
-        cells.filter { it.isHorizontalNeighborOf(this) || it.isVerticalNeighborOf(this) }
+    private fun Cell.liberates(other: Cell) = when (state) {
+        CellState.Empty -> false
+        else -> neighbors().contains(other) && state.player === other.state.player
     }
 }
 
@@ -109,10 +109,12 @@ data class Cell(
 
     fun isOccupied() = !isEmpty()
 
-    fun isVerticalNeighborOf(other: Cell) =
+    fun isNeighborOf(other: Cell) = isVerticalNeighborOf(other) || isHorizontalNeighborOf(other)
+
+    private fun isVerticalNeighborOf(other: Cell) =
         this.x == other.x && (this.y == other.y - 1 || this.y == other.y + 1)
 
-    fun isHorizontalNeighborOf(other: Cell) =
+    private fun isHorizontalNeighborOf(other: Cell) =
         this.y == other.y && (this.x == other.x - 1 || this.x == other.x + 1)
 }
 

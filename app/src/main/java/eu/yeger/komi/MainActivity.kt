@@ -94,6 +94,6 @@ fun PlayerCard(player: Player) {
 fun CurrentPlayerCard(game: Game) {
     Row {
         Text(text = "Current Player: ")
-        Text(text = game.currentPlayer!!.name, style = TextStyle(color = game.currentPlayer?.color))
+        Text(text = game.currentPlayer.name, style = TextStyle(color = game.currentPlayer.color))
     }
 }
