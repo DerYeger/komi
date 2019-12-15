@@ -1,6 +1,7 @@
 package eu.yeger.komi.model
 
 import androidx.compose.Model
+import java.io.Serializable
 
 @Model
 class Game(
@@ -8,9 +9,9 @@ class Game(
         Player.firstPlayer(),
         Player.secondPlayer()
     ),
-    val width: Int = 5,
-    val height: Int = 5,
-    val scoreLimit: Int = 9
+    val width: Int,
+    val height: Int,
+    val scoreLimit: Int
 ) {
     val cellArray = Array(height) { y ->
         Array(width) { x ->
@@ -21,6 +22,7 @@ class Game(
             )
         }
     }
+
     private val cells = cellArray.flatten()
     private val neighborMap = HashMap<Cell, List<Cell>>()
 
@@ -80,7 +82,8 @@ class Game(
         while (true) {
             uncheckedCells
                 .filter {
-                    it.neighbors().any { neighbor -> neighbor in safeCells && neighbor.liberates(it) }
+                    it.neighbors()
+                        .any { neighbor -> neighbor in safeCells && neighbor.liberates(it) }
                 }
                 .also {
                     if (it.isEmpty()) return uncheckedCells.toList() // no more liberties granted, remaining unchecked cells can not have liberties
@@ -102,4 +105,27 @@ class Game(
         CellState.Empty -> false
         else -> neighbors().contains(other) && state.player === other.state.player
     }
+
+    open class Configuration(
+        val width: Int,
+        val height: Int,
+        val scoreLimit: Int
+    ) : Serializable {
+        object Default : Configuration(5, 5, 5)
+    }
 }
+
+fun Game.generateConfiguration() =
+    Game.Configuration(
+        width = width,
+        height = height,
+        scoreLimit = scoreLimit
+    )
+
+fun Game.Configuration.generateGame() =
+    Game(
+        width = width,
+        height = height,
+        scoreLimit = scoreLimit
+    )
+

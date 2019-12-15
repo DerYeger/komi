@@ -13,10 +13,19 @@ import androidx.ui.material.MaterialTheme
 import androidx.ui.material.surface.Card
 
 @Composable
-fun CenteredRow(children: @Composable() () -> Unit) {
-    Row(modifier = ExpandedWidth, arrangement = Arrangement.Center) {
+fun ExpandedRow(
+    arrangement: Arrangement = Arrangement.Begin,
+    modifier: Modifier = Modifier.None,
+    children: @Composable() () -> Unit
+) {
+    Row(modifier = ExpandedWidth.wraps(modifier), arrangement = arrangement) {
         children()
     }
+}
+
+@Composable
+fun CenteredRow(children: @Composable() () -> Unit) {
+    ExpandedRow(arrangement = Arrangement.Center, children = children)
 }
 
 @Composable

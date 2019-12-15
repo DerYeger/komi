@@ -18,27 +18,27 @@ import androidx.ui.material.ContainedButtonStyle
 import androidx.ui.material.FloatingActionButton
 import androidx.ui.text.TextStyle
 import androidx.ui.tooling.preview.Preview
-import eu.yeger.komi.model.Cell
-import eu.yeger.komi.model.Game
-import eu.yeger.komi.model.Player
+import eu.yeger.komi.model.*
 
 class GameActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val configuration: Game.Configuration =
+            intent.getKomiExtra("game_configuration") ?: Game.Configuration.Default
         setContent {
-            GamePage(this)
+            GamePage(activity = this, game = configuration.generateGame())
         }
     }
 }
 
-@Preview("Game Screen")
+@Preview("GamePage")
 @Composable
 fun DefaultPreview() {
-    GamePage(GameActivity())
+    GamePage(activity = GameActivity(), game = Game.Configuration.Default.generateGame())
 }
 
 @Composable
-fun GamePage(activity: AppCompatActivity, game: Game = Game()) {
+fun GamePage(activity: AppCompatActivity, game: Game) {
     ThemedPage {
         Align(alignment = Alignment.TopCenter) {
             Column(modifier = ExpandedHeight) {
@@ -56,7 +56,7 @@ fun GamePage(activity: AppCompatActivity, game: Game = Game()) {
 
 @Composable
 fun PlayerCards(game: Game) {
-    Row(modifier = ExpandedWidth, arrangement = Arrangement.SpaceBetween) {
+    ExpandedRow(arrangement = Arrangement.SpaceBetween) {
         PlayerCard(game = game, player = game.players.first)
         PlayerCard(game = game, player = game.players.second)
     }
@@ -86,7 +86,7 @@ fun GameOverDialog(activity: AppCompatActivity, game: Game) {
             Button(
                 text = "Restart",
                 onClick = {
-                    activity.startActivity(GameActivity::class)
+                    activity.startGameWithConfiguration(game.generateConfiguration())
                     activity.finish()
                 }
             )
@@ -105,13 +105,13 @@ fun GameOverDialog(activity: AppCompatActivity, game: Game) {
 
 @Composable
 fun Board(game: Game) {
-    Row(modifier = ExpandedWidth, arrangement = Arrangement.Center) {
+    CenteredRow {
         ElevatedCard {
             HorizontalScroller {
                 VerticalScroller {
                     Column(modifier = ExpandedHeight) {
                         for (row in game.cellArray) {
-                            Row(modifier = ExpandedWidth) {
+                            ExpandedRow {
                                 for (cell in row) {
                                     CellView(game = game, cell = cell)
                                 }
@@ -126,7 +126,7 @@ fun Board(game: Game) {
 
 @Composable
 fun CellView(game: Game, cell: Cell) {
-    Container(modifier = Size(50.dp, 50.dp).wraps(Spacing(4.dp))) {
+    Container(modifier = Spacing(4.dp)) {
         FloatingActionButton(
             text = "",
             onClick = { game.turn(cell) },
