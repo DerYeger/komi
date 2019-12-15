@@ -5,7 +5,7 @@ import androidx.ui.graphics.Color
 
 @Model
 class Game(
-    val players: Pair<Player, Player> = Pair(Player.Black(), Player.White()),
+    val players: Pair<Player, Player> = Pair(Player.firstPlayer(), Player.secondPlayer()),
     val width: Int = 5,
     val height: Int = 5,
     val scoreLimit: Int = 9
@@ -102,9 +102,12 @@ class Player(
     var score: Int = 0
 ) {
     companion object {
-        val None = Player(name = "None", color = Color.Transparent, score = 0)
-        fun Black() = Player(name = "Black", color = Color.Black, score = 0)
-        fun White() = Player(name = "White", color = Color.White, score = 0)
+        val None = Player(name = "None", color = Color(0xFF121212), score = 0)
+        fun firstPlayer(name: String = "First player") =
+            Player(name = name, color = primaryColor, score = 0)
+
+        fun secondPlayer(name: String = "Second player") =
+            Player(name = name, color = secondaryColor, score = 0)
     }
 }
 
