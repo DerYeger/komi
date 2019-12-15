@@ -18,6 +18,9 @@ import androidx.ui.material.ContainedButtonStyle
 import androidx.ui.material.FloatingActionButton
 import androidx.ui.text.TextStyle
 import androidx.ui.tooling.preview.Preview
+import eu.yeger.komi.model.Cell
+import eu.yeger.komi.model.Game
+import eu.yeger.komi.model.Player
 
 class GameActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

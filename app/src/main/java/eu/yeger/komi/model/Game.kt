@@ -1,17 +1,25 @@
-package eu.yeger.komi
+package eu.yeger.komi.model
 
 import androidx.compose.Model
-import androidx.ui.graphics.Color
 
 @Model
 class Game(
-    val players: Pair<Player, Player> = Pair(Player.firstPlayer(), Player.secondPlayer()),
+    val players: Pair<Player, Player> = Pair(
+        Player.firstPlayer(),
+        Player.secondPlayer()
+    ),
     val width: Int = 5,
     val height: Int = 5,
     val scoreLimit: Int = 9
 ) {
     val cellArray = Array(height) { y ->
-        Array(width) { x -> Cell(x = x, y = y, state = CellState.Empty) }
+        Array(width) { x ->
+            Cell(
+                x = x,
+                y = y,
+                state = CellState.Empty
+            )
+        }
     }
     private val cells = cellArray.flatten()
     private val neighborMap = HashMap<Cell, List<Cell>>()
@@ -93,52 +101,4 @@ class Game(
         CellState.Empty -> false
         else -> neighbors().contains(other) && state.player === other.state.player
     }
-}
-
-@Model
-class Player(
-    val name: String,
-    val color: Color,
-    var score: Int = 0
-) {
-    companion object {
-        val None = Player(name = "None", color = Color(0xFF121212), score = 0)
-        fun firstPlayer(name: String = "First player") =
-            Player(name = name, color = primaryColor, score = 0)
-
-        fun secondPlayer(name: String = "Second player") =
-            Player(name = name, color = secondaryColor, score = 0)
-    }
-}
-
-@Model
-data class Cell(
-    val x: Int,
-    val y: Int,
-    var state: CellState
-) {
-    fun isEmpty() = state === CellState.Empty
-
-    fun isOccupied() = !isEmpty()
-
-    fun isNeighborOf(other: Cell) = isVerticalNeighborOf(other) || isHorizontalNeighborOf(other)
-
-    private fun isVerticalNeighborOf(other: Cell) =
-        this.x == other.x && (this.y == other.y - 1 || this.y == other.y + 1)
-
-    private fun isHorizontalNeighborOf(other: Cell) =
-        this.y == other.y && (this.x == other.x - 1 || this.x == other.x + 1)
-}
-
-sealed class CellState {
-    abstract val player: Player
-
-    val color
-        get() = player.color
-
-    object Empty : CellState() {
-        override val player = Player.None
-    }
-
-    class Occupied(override val player: Player) : CellState()
 }
