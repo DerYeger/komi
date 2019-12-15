@@ -49,9 +49,9 @@ class Game(
     }
 
     private fun turnForPlayer(player: Player) {
-        val cellsToClear = player.opponent().cellsWithoutLiberties()
-        cells
-            .filter { it in cellsToClear }
+        player
+            .opponent()
+            .cellsWithoutLiberties()
             .forEach {
                 player.score++
                 it.state = CellState.Empty
