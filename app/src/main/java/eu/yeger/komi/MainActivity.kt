@@ -103,9 +103,9 @@ fun Input(inputState: InputState) {
 
 class MainPageState {
     val dialogVisible = +state { false }
-    val gameWidth = InputState("Width", 5, 4)
-    val gameHeight = InputState("Height", 5, 4)
-    val gameScoreLimit = InputState("Score limit", 9, 1)
+    val gameWidth = InputState("Width", Game.Configuration.Default.width, 4)
+    val gameHeight = InputState("Height", Game.Configuration.Default.height, 4)
+    val gameScoreLimit = InputState("Score limit", Game.Configuration.Default.scoreLimit, 1)
 
     fun generateGameConfiguration() =
         Game.Configuration(
