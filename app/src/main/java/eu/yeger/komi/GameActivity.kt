@@ -10,14 +10,12 @@ import androidx.ui.core.setContent
 import androidx.ui.foundation.HorizontalScroller
 import androidx.ui.foundation.VerticalScroller
 import androidx.ui.foundation.shape.border.Border
-import androidx.ui.foundation.shape.corner.RoundedCornerShape
 import androidx.ui.graphics.Color
 import androidx.ui.layout.*
 import androidx.ui.material.AlertDialog
 import androidx.ui.material.Button
 import androidx.ui.material.ContainedButtonStyle
 import androidx.ui.material.FloatingActionButton
-import androidx.ui.material.surface.Card
 import androidx.ui.text.TextStyle
 import androidx.ui.tooling.preview.Preview
 
@@ -63,19 +61,15 @@ fun PlayerCards(game: Game) {
 
 @Composable
 fun PlayerCard(game: Game, player: Player) {
-    Card(
-        modifier = Spacing(8.dp),
+    ElevatedCard(
         border = if (game.currentPlayer === player) Border(player.color, 2.dp) else null,
         color = Color.Transparent,
-        elevation = 0.dp,
-        shape = RoundedCornerShape(4.dp)
+        elevation = 0.dp
     ) {
-        Padding(padding = 8.dp) {
-            Text(
-                text = "Score: ${player.score}",
-                style = TextStyle(color = player.color)
-            )
-        }
+        Text(
+            text = "Score: ${player.score}",
+            style = TextStyle(color = player.color)
+        )
     }
 }
 
@@ -87,7 +81,7 @@ fun GameOverDialog(activity: AppCompatActivity, game: Game) {
         text = { Text(text = "${game.winner?.name} has won!") },
         confirmButton = {
             Button(
-                text = "Retry",
+                text = "Restart",
                 onClick = {
                     activity.startActivity(GameActivity::class)
                     activity.finish()
@@ -96,7 +90,7 @@ fun GameOverDialog(activity: AppCompatActivity, game: Game) {
         },
         dismissButton = {
             Button(
-                text = "Restart",
+                text = "Quit",
                 onClick = {
                     activity.finish()
                 },

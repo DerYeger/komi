@@ -2,6 +2,7 @@ package eu.yeger.komi
 
 import androidx.compose.Composable
 import androidx.compose.unaryPlus
+import androidx.ui.core.Dp
 import androidx.ui.core.Modifier
 import androidx.ui.core.dp
 import androidx.ui.foundation.shape.border.Border
@@ -23,6 +24,7 @@ fun ElevatedCard(
     modifier: Modifier = Modifier.None,
     border: Border? = null,
     color: Color = (+MaterialTheme.colors()).surface,
+    elevation: Dp = 3.dp,
     children: @Composable() () -> Unit
 ) {
     Card(
@@ -30,7 +32,7 @@ fun ElevatedCard(
         border = border,
         color = color,
         shape = RoundedCornerShape(4.dp),
-        elevation = 3.dp
+        elevation = elevation
     ) {
         Padding(padding = 8.dp) {
             children()
