@@ -79,8 +79,12 @@ class Game(
 
         while (true) {
             uncheckedCells
-                .filter { safeCells.any { safeCell -> safeCell.liberates(it) } }
-                .also { if (it.isEmpty()) return uncheckedCells.toList() } // no more liberties granted, remaining unchecked cells can not have liberties
+                .filter {
+                    it.neighbors().any { neighbor -> neighbor in safeCells && neighbor.liberates(it) }
+                }
+                .also {
+                    if (it.isEmpty()) return uncheckedCells.toList() // no more liberties granted, remaining unchecked cells can not have liberties
+                }
                 .forEach {
                     safeCells.add(it)
                     uncheckedCells.remove(it)
