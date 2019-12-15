@@ -12,6 +12,7 @@ import androidx.ui.foundation.shape.corner.CircleShape
 import androidx.ui.graphics.Color
 import androidx.ui.graphics.SolidColor
 import androidx.ui.layout.*
+import androidx.ui.material.AlertDialog
 import androidx.ui.material.Button
 import androidx.ui.material.ButtonStyle
 import androidx.ui.text.TextStyle
@@ -21,7 +22,7 @@ class GameActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            GamePage()
+            GamePage(this)
         }
     }
 }
@@ -29,11 +30,11 @@ class GameActivity : AppCompatActivity() {
 @Preview("Game Screen")
 @Composable
 fun DefaultPreview() {
-    GamePage()
+    GamePage(GameActivity())
 }
 
 @Composable
-fun GamePage(game: Game = Game()) {
+fun GamePage(activity: AppCompatActivity, game: Game = Game()) {
     ThemedPage {
         Center {
             Column(modifier = ExpandedHeight) {
@@ -43,12 +44,13 @@ fun GamePage(game: Game = Game()) {
                 HeightSpacer(height = 8.dp)
                 CurrentPlayerCard(game = game)
                 HeightSpacer(height = 8.dp)
-                WinnerCard(game = game)
+                if (game.gameOver) {
+                    GameOverDialog(activity = activity, game = game)
+                }
             }
         }
     }
 }
-
 
 @Composable
 fun PlayerCards(game: Game) {
@@ -83,16 +85,29 @@ fun CurrentPlayerCard(game: Game) {
 }
 
 @Composable
-fun WinnerCard(game: Game) {
-    ElevatedCard {
-        Row {
-            Text(text = "Winner: ")
-            Text(
-                text = game.winner?.name ?: "",
-                style = TextStyle(color = game.winner?.color ?: Color.Transparent)
+fun GameOverDialog(activity: AppCompatActivity, game: Game) {
+    AlertDialog(
+        onCloseRequest = { },
+        title = { Text(text = "Game Over") },
+        text = { Text(text = "${game.winner!!.name} has won!") },
+        confirmButton = {
+            Button(
+                text = "Retry",
+                onClick = {
+                    activity.startActivity(GameActivity::class)
+                    activity.finish()
+                }
+            )
+        },
+        dismissButton = {
+            Button(
+                text = "Quit",
+                onClick = {
+                    activity.finish()
+                }
             )
         }
-    }
+    )
 }
 
 @Composable
