@@ -7,14 +7,10 @@ import androidx.ui.core.Alignment
 import androidx.ui.core.Text
 import androidx.ui.core.dp
 import androidx.ui.core.setContent
-import androidx.ui.foundation.shape.border.Border
-import androidx.ui.foundation.shape.corner.CircleShape
-import androidx.ui.graphics.Color
-import androidx.ui.graphics.SolidColor
 import androidx.ui.layout.*
 import androidx.ui.material.AlertDialog
 import androidx.ui.material.Button
-import androidx.ui.material.ButtonStyle
+import androidx.ui.material.FloatingActionButton
 import androidx.ui.text.TextStyle
 import androidx.ui.tooling.preview.Preview
 
@@ -54,7 +50,10 @@ fun GamePage(activity: AppCompatActivity, game: Game = Game()) {
 
 @Composable
 fun PlayerCards(game: Game) {
-    Row {
+    Row(
+        modifier = ExpandedWidth,
+        arrangement = Arrangement.SpaceBetween
+    ) {
         PlayerCard(game.players.first)
         WidthSpacer(width = 8.dp)
         PlayerCard(game.players.second)
@@ -128,14 +127,11 @@ fun Board(game: Game) {
 @Composable
 fun CellView(game: Game, cell: Cell) {
     Container(modifier = Size(50.dp, 50.dp)) {
-        Button(
+        FloatingActionButton(
             text = "",
             onClick = { game.turn(cell) },
-            style = ButtonStyle(
-                color = cell.state.color,
-                shape = CircleShape,
-                border = Border(brush = SolidColor(Color.Black), width = 1.dp)
-            )
+            color = cell.state.color,
+            elevation = 1.dp
         )
     }
 }
