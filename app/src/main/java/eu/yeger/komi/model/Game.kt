@@ -78,16 +78,13 @@ class Game(
             .toMutableSet() // collect occupied cells without empty neighbors
 
         while (true) {
-            val transitiveSafeCells = uncheckedCells
+            uncheckedCells
                 .filter { safeCells.any { safeCell -> safeCell.liberates(it) } }
-                .toSet()
-
-            if (transitiveSafeCells.isEmpty()) {
-                return uncheckedCells.toList() // no more liberties granted, remaining unchecked cells can not have liberties
-            }
-
-            safeCells.addAll(transitiveSafeCells)
-            uncheckedCells.removeAll(transitiveSafeCells)
+                .also { if (it.isEmpty()) return uncheckedCells.toList() } // no more liberties granted, remaining unchecked cells can not have liberties
+                .forEach {
+                    safeCells.add(it)
+                    uncheckedCells.remove(it)
+                }
         }
     }
 
