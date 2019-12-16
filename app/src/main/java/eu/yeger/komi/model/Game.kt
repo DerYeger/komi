@@ -40,7 +40,7 @@ class Game(
 
     fun occupy(cell: Cell) {
         if (!currentPlayer.isComputer) {
-            CoroutineScope(Dispatchers.Unconfined).launch {
+            CoroutineScope(Dispatchers.Main).launch {
                 turn(cell)
             }
         }
@@ -55,7 +55,7 @@ class Game(
             if (gameOver) return
             currentPlayer = currentPlayer.opponent
             if (currentPlayer.isComputer) {
-                CoroutineScope(Dispatchers.Unconfined).launch {
+                CoroutineScope(Dispatchers.Main).launch {
                     computerTurn(currentPlayer)
                 }
             }
@@ -113,10 +113,18 @@ class Game(
             uncheckedCells
                 .filter {
                     it.neighbors
-                        .any { neighbor -> neighbor in safeCells && neighbor.liberates(it) }
+                        .any { neighbor -> neighbor in safeCells && neighbor.liberates(it, turn) }
                 }
                 .also {
-                    if (it.isEmpty()) return uncheckedCells.toList() // no more liberties granted, remaining unchecked cells can not have liberties
+                    if (it.isEmpty()) {
+                        turn
+                            ?.takeIf {
+                                this === turn.player && turn.cell.neighbors.none { neighbor -> neighbor.isEmpty() || neighbor in safeCells }
+                            }?.also { turn ->
+                                uncheckedCells.add(turn.cell)
+                            }
+                        return uncheckedCells.toList()
+                    } // no more liberties granted, remaining unchecked cells can not have liberties
                 }
                 .forEach {
                     safeCells.add(it)
@@ -154,7 +162,6 @@ class Game(
         val scoreLimit: Int,
         versusComputer: Boolean
     ) : Serializable {
-
         val playerConfigurations: Pair<Player.Configuration, Player.Configuration>
 
         init {
@@ -184,57 +191,71 @@ class Game(
 
     private inner class Turn(val player: Player, val cell: Cell) : Comparable<Turn> {
 
-        // hierarchy of decision
-        // unequal should return it, if larger is better or -it, if smaller is better
-        // equal should return the next lower decision result of the hierarchy
+        // return value is negative if this turn is worse than other
+        // return value is positive if this turn is better than other
+        // return value is 0 if both turns are equal or not comparable
         override fun compareTo(other: Turn): Int {
-            gains(other).unequal { return it }.equal {
-                potentialLosses(other).unequal { return -it }.equal {
-                    suicides(other).unequal { return -it }.equal {
-                        nonOpposedNeighbors(other).unequal { return it }
+            if (this.player !== other.player) return 0
+
+            return losses(other).smallerOr {
+                gains(other).biggerOr {
+                    potentialLosses(other).smallerOr {
+                        inherentlySafeCells(other).biggerOr {
+                            nonEmptyNeighbors(other).biggerOr {
+                                neighbors(other).biggerOr {
+                                    0
+                                }
+                            }
+                        }
                     }
                 }
             }
-            return 0
         }
+
+        private fun losses(other: Turn) = Pair(
+            this.player.cellsWithoutLiberties(this).size,
+            other.player.cellsWithoutLiberties(other).size
+        ).also { println(it) }
 
         private fun gains(other: Turn) = Pair(
             this.player.opponent.cellsWithoutLiberties(this).size,
             other.player.opponent.cellsWithoutLiberties(other).size
         )
 
-        private fun suicides(other: Turn) = Pair(
-            this.player.cellsWithoutLiberties(this).size,
-            other.player.cellsWithoutLiberties(other).size
-        )
-
         private fun potentialLosses(other: Turn) = Pair(
-            this.player.cellsWithoutLiberties(
-                Turn(this.player.opponent, this.cell)
-            ).size,
-            this.player.cellsWithoutLiberties(
-                Turn(other.player.opponent, other.cell)
-            ).size
+            this.player.cellsWithoutLiberties(Turn(this.player.opponent, this.cell)).size,
+            other.player.cellsWithoutLiberties(Turn(other.player.opponent, other.cell)).size
         )
 
-        private fun nonOpposedNeighbors(other: Turn) = Pair(
-            this.cell.neighbors.count { it.isEmpty() || it.state.player === this.player },
-            other.cell.neighbors.count { it.isEmpty() || it.state.player === other.player }
+        private fun inherentlySafeCells(other: Turn) = Pair(
+            cells.filter { it.state.player === this.player && it.hasEmptyNeighbor(except = this.cell) }.size,
+            cells.filter { it.state.player === other.player && it.hasEmptyNeighbor(except = other.cell) }.size
         )
 
-        private inline fun Pair<Int, Int>.equal(block: () -> Unit): Pair<Int, Int> {
-            if (first == second) {
+        private fun neighbors(other: Turn) = Pair(
+            this.cell.neighbors.size,
+            other.cell.neighbors.size
+        )
+
+        private fun nonEmptyNeighbors(other: Turn) = Pair(
+            this.cell.neighbors.count { it.isOccupied() },
+            other.cell.neighbors.count { it.isOccupied() }
+        )
+
+        private inline fun Pair<Int, Int>.biggerOr(block: () -> Int): Int {
+            return if (first == second) {
                 block()
+            } else {
+                first - second
             }
-            return this
         }
 
-        private inline fun Pair<Int, Int>.unequal(block: (Int) -> Unit): Pair<Int, Int> {
-            val difference = first - second
-            if (difference != 0) {
-                block(difference)
+        private inline fun Pair<Int, Int>.smallerOr(block: () -> Int): Int {
+            return if (first == second) {
+                block()
+            } else {
+                second - first
             }
-            return this
         }
     }
 }

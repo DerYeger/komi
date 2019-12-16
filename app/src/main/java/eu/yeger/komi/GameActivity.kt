@@ -83,23 +83,27 @@ fun GameOverDialog(activity: AppCompatActivity, game: Game) {
             title = { Text(text = "Game Over") },
             text = { Text(text = "${game.winner?.name} has won!") },
             confirmButton = {
-                Button(
-                    text = "Restart",
-                    onClick = {
-                        activity.startGameWithConfiguration(game.generateConfiguration())
-                        activity.finish()
-                    },
-                    modifier = Width(100.dp)
-                )
+                Padding(bottom = 4.dp, right = 4.dp) {
+                    Button(
+                        text = "Restart",
+                        onClick = {
+                            activity.startGameWithConfiguration(game.generateConfiguration())
+                            activity.finish()
+                        },
+                        modifier = Width(100.dp)
+                    )
+                }
             },
             dismissButton = {
-                Button(
-                    text = "Quit",
-                    onClick = {
-                        activity.finish()
-                    },
-                    modifier = Width(100.dp)
-                )
+                Padding(bottom = 4.dp) {
+                    Button(
+                        text = "Quit",
+                        onClick = {
+                            activity.finish()
+                        },
+                        modifier = Width(100.dp)
+                    )
+                }
             }
         )
     }
