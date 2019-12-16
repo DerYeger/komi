@@ -14,11 +14,12 @@ import androidx.ui.graphics.Color
 import androidx.ui.layout.*
 import androidx.ui.material.AlertDialog
 import androidx.ui.material.Button
-import androidx.ui.material.ContainedButtonStyle
 import androidx.ui.material.FloatingActionButton
 import androidx.ui.text.TextStyle
 import androidx.ui.tooling.preview.Preview
-import eu.yeger.komi.model.*
+import eu.yeger.komi.model.Cell
+import eu.yeger.komi.model.Game
+import eu.yeger.komi.model.Player
 
 class GameActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,9 +49,7 @@ fun GamePage(activity: AppCompatActivity, game: Game) {
                 }
             }
         }
-        if (game.gameOver) {
-            GameOverDialog(activity = activity, game = game)
-        }
+        GameOverDialog(activity = activity, game = game)
     }
 }
 
@@ -78,29 +77,32 @@ fun PlayerCard(game: Game, player: Player) {
 
 @Composable
 fun GameOverDialog(activity: AppCompatActivity, game: Game) {
-    AlertDialog(
-        onCloseRequest = { },
-        title = { Text(text = "Game Over") },
-        text = { Text(text = "${game.winner?.name} has won!") },
-        confirmButton = {
-            Button(
-                text = "Restart",
-                onClick = {
-                    activity.startGameWithConfiguration(game.generateConfiguration())
-                    activity.finish()
-                }
-            )
-        },
-        dismissButton = {
-            Button(
-                text = "Quit",
-                onClick = {
-                    activity.finish()
-                },
-                style = ContainedButtonStyle()
-            )
-        }
-    )
+    if (game.gameOver) {
+        AlertDialog(
+            onCloseRequest = { },
+            title = { Text(text = "Game Over") },
+            text = { Text(text = "${game.winner?.name} has won!") },
+            confirmButton = {
+                Button(
+                    text = "Restart",
+                    onClick = {
+                        activity.startGameWithConfiguration(game.generateConfiguration())
+                        activity.finish()
+                    },
+                    modifier = Width(100.dp)
+                )
+            },
+            dismissButton = {
+                Button(
+                    text = "Quit",
+                    onClick = {
+                        activity.finish()
+                    },
+                    modifier = Width(100.dp)
+                )
+            }
+        )
+    }
 }
 
 @Composable
@@ -129,7 +131,7 @@ fun CellView(game: Game, cell: Cell) {
     Container(modifier = Spacing(4.dp)) {
         FloatingActionButton(
             text = "",
-            onClick = { game.turn(cell) },
+            onClick = { game.occupy(cell) },
             color = cell.state.color,
             elevation = 0.dp
         )

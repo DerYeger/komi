@@ -6,9 +6,9 @@ import androidx.compose.Model
 data class Cell(
     val x: Int,
     val y: Int,
-    var state: CellState
+    var state: State
 ) {
-    fun isEmpty() = state === CellState.Empty
+    fun isEmpty() = state === State.Empty
 
     fun isOccupied() = !isEmpty()
 
@@ -19,17 +19,23 @@ data class Cell(
 
     private fun isHorizontalNeighborOf(other: Cell) =
         this.y == other.y && (this.x == other.x - 1 || this.x == other.x + 1)
-}
 
-sealed class CellState {
-    abstract val player: Player
+    //
+    // Cell.State
+    //
 
-    val color
-        get() = player.color
+    sealed class State {
+        abstract val player: Player
 
-    object Empty : CellState() {
-        override val player = Player.None
+        val color
+            get() = player.color
+
+        object Empty : State() {
+            override val player = Player.None
+        }
+
+        class Occupied(override val player: Player) : State()
     }
-
-    class Occupied(override val player: Player) : CellState()
 }
+
+

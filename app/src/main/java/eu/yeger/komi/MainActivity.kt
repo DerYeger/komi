@@ -13,6 +13,7 @@ import androidx.ui.core.setContent
 import androidx.ui.foundation.Dialog
 import androidx.ui.layout.*
 import androidx.ui.material.Button
+import androidx.ui.material.Checkbox
 import androidx.ui.material.MaterialTheme
 import androidx.ui.text.TextStyle
 import eu.yeger.komi.model.Game
@@ -42,7 +43,15 @@ fun MainPage(activity: AppCompatActivity) {
                 CenteredRow {
                     Button(
                         text = "Play",
-                        onClick = { activity.startActivity(GameActivity::class) },
+                        onClick = { activity.startGameWithConfiguration(Game.Configuration.Default) },
+                        modifier = Width(100.dp)
+                    )
+                }
+                HeightSpacer(height = 16.dp)
+                CenteredRow {
+                    Button(
+                        text = "Local",
+                        onClick = { activity.startGameWithConfiguration(Game.Configuration.Local) },
                         modifier = Width(100.dp)
                     )
                 }
@@ -73,13 +82,21 @@ fun GameConfigurationDialog(activity: AppCompatActivity, state: MainPageState) {
                         HeightSpacer(height = 8.dp)
                         Input(state.gameScoreLimit)
                         HeightSpacer(height = 8.dp)
+                        Row {
+                            Text(text = "Computer opponent")
+                            WidthSpacer(width = 8.dp)
+                            Checkbox(
+                                checked = state.versusComputer.value,
+                                onCheckedChange = { state.versusComputer.value = it })
+                        }
                         ExpandedRow(arrangement = Arrangement.End) {
                             Button(
                                 text = "Play",
                                 onClick = {
                                     activity.startGameWithConfiguration(state.generateGameConfiguration())
                                     state.dialogVisible.value = false
-                                }
+                                },
+                                modifier = Width(100.dp)
                             )
                         }
                     }
@@ -106,13 +123,16 @@ class MainPageState {
     val gameWidth = InputState("Width", Game.Configuration.Default.width, 4)
     val gameHeight = InputState("Height", Game.Configuration.Default.height, 4)
     val gameScoreLimit = InputState("Score limit", Game.Configuration.Default.scoreLimit, 1)
+    val versusComputer = +state { true }
 
-    fun generateGameConfiguration() =
-        Game.Configuration(
+    fun generateGameConfiguration(): Game.Configuration {
+        return Game.Configuration(
             width = gameWidth.value,
             height = gameHeight.value,
-            scoreLimit = gameScoreLimit.value
+            scoreLimit = gameScoreLimit.value,
+            versusComputer = versusComputer.value
         )
+    }
 }
 
 @Model
