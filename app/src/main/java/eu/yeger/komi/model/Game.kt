@@ -212,35 +212,26 @@ class Game(
             }
         }
 
+        val losses by lazy { this.player.cellsWithoutLiberties(this).size }
+
         private fun losses(other: Turn) = Pair(
-            this.player.cellsWithoutLiberties(this).size,
-            other.player.cellsWithoutLiberties(other).size
-        ).also { println(it) }
-
-        private fun gains(other: Turn) = Pair(
-            this.player.opponent.cellsWithoutLiberties(this).size,
-            other.player.opponent.cellsWithoutLiberties(other).size
+            this.losses,
+            other.losses
         )
 
-        private fun potentialLosses(other: Turn) = Pair(
-            this.player.cellsWithoutLiberties(Turn(this.player.opponent, this.cell)).size,
-            other.player.cellsWithoutLiberties(Turn(other.player.opponent, other.cell)).size
-        )
+        val gains by lazy { this.player.opponent.cellsWithoutLiberties(this).size }
+        private fun gains(other: Turn) = this.gains to other.gains
 
-        private fun inherentlySafeCells(other: Turn) = Pair(
-            cells.filter { it.state.player === this.player && it.hasEmptyNeighbor(except = this.cell) }.size,
-            cells.filter { it.state.player === other.player && it.hasEmptyNeighbor(except = other.cell) }.size
-        )
+        val potentialLosses by lazy { this.player.cellsWithoutLiberties(Turn(this.player.opponent, this.cell)).size }
+        private fun potentialLosses(other: Turn) = this.potentialLosses to other.potentialLosses
 
-        private fun neighbors(other: Turn) = Pair(
-            this.cell.neighbors.size,
-            other.cell.neighbors.size
-        )
+        val inherentlySafeCells by lazy { cells.filter { it.state.player === this.player && it.hasEmptyNeighbor(except = this.cell) }.size }
+        private fun inherentlySafeCells(other: Turn) = this.inherentlySafeCells to other.inherentlySafeCells
 
-        private fun nonEmptyNeighbors(other: Turn) = Pair(
-            this.cell.neighbors.count { it.isOccupied() },
-            other.cell.neighbors.count { it.isOccupied() }
-        )
+        private fun neighbors(other: Turn) = this.cell.neighbors.size to other.cell.neighbors.size
+
+        val emptyNeighbors by lazy { this.cell.neighbors.count { it.isOccupied() } }
+        private fun nonEmptyNeighbors(other: Turn) = this.emptyNeighbors to other.emptyNeighbors
 
         private inline fun Pair<Int, Int>.biggerOr(block: () -> Int): Int {
             return if (first == second) {
