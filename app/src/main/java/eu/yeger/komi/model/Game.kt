@@ -213,11 +213,7 @@ class Game(
         }
 
         val losses by lazy { this.player.cellsWithoutLiberties(this).size }
-
-        private fun losses(other: Turn) = Pair(
-            this.losses,
-            other.losses
-        )
+        private fun losses(other: Turn) = this.losses to other.losses
 
         val gains by lazy { this.player.opponent.cellsWithoutLiberties(this).size }
         private fun gains(other: Turn) = this.gains to other.gains
