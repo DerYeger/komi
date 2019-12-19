@@ -162,6 +162,18 @@ class Game(
         val scoreLimit: Int,
         versusComputer: Boolean
     ) : Serializable {
+
+        companion object {
+            const val DEFAULT_WIDTH = 5
+            const val DEFAULT_HEIGHT = 5
+            const val DEFAULT_SCORE_LIMIT = 5
+
+            val WIDTH_RANGE = 4F..32F
+            val HEIGHT_RANGE = 4F..32F
+
+            fun maxScoreLimit(width: Number, height: Number) = width.toInt() * height.toInt() / 4
+        }
+
         val playerConfigurations: Pair<Player.Configuration, Player.Configuration>
 
         init {
@@ -218,11 +230,27 @@ class Game(
         val gains by lazy { this.player.opponent.cellsWithoutLiberties(this).size }
         private fun gains(other: Turn) = this.gains to other.gains
 
-        val potentialLosses by lazy { this.player.cellsWithoutLiberties(Turn(this.player.opponent, this.cell)).size }
+        val potentialLosses by lazy {
+            this.player.cellsWithoutLiberties(
+                Turn(
+                    this.player.opponent,
+                    this.cell
+                )
+            ).size
+        }
+
         private fun potentialLosses(other: Turn) = this.potentialLosses to other.potentialLosses
 
-        val inherentlySafeCells by lazy { cells.filter { it.state.player === this.player && it.hasEmptyNeighbor(except = this.cell) }.size }
-        private fun inherentlySafeCells(other: Turn) = this.inherentlySafeCells to other.inherentlySafeCells
+        val inherentlySafeCells by lazy {
+            cells.filter {
+                it.state.player === this.player && it.hasEmptyNeighbor(
+                    except = this.cell
+                )
+            }.size
+        }
+
+        private fun inherentlySafeCells(other: Turn) =
+            this.inherentlySafeCells to other.inherentlySafeCells
 
         private fun neighbors(other: Turn) = this.cell.neighbors.size to other.cell.neighbors.size
 

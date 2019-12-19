@@ -3,18 +3,15 @@ package eu.yeger.komi
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.Composable
-import androidx.compose.Model
+import androidx.compose.State
 import androidx.compose.state
 import androidx.compose.unaryPlus
 import androidx.ui.core.Text
-import androidx.ui.core.TextField
 import androidx.ui.core.dp
 import androidx.ui.core.setContent
 import androidx.ui.foundation.Dialog
 import androidx.ui.layout.*
-import androidx.ui.material.Button
-import androidx.ui.material.Checkbox
-import androidx.ui.material.MaterialTheme
+import androidx.ui.material.*
 import androidx.ui.text.TextStyle
 import eu.yeger.komi.model.Game
 
@@ -74,21 +71,33 @@ fun GameConfigurationDialog(activity: AppCompatActivity, state: MainPageState) {
     if (state.dialogVisible.value) {
         Dialog(onCloseRequest = { state.dialogVisible.value = false }) {
             AppTheme {
-                ElevatedCard {
-                    Column {
-                        Input(state.gameWidth)
+                ElevatedCard(modifier = Width(400.dp)) {
+                    Column(modifier = Spacing(8.dp)) {
+                        Slider(
+                            text = "Width",
+                            sliderState = state.gameWidth,
+                            range = Game.Configuration.WIDTH_RANGE,
+                            sideEffect = { state.coerceGameScoreLimit() }
+                        )
                         HeightSpacer(height = 8.dp)
-                        Input(state.gameHeight)
+                        Slider(
+                            text = "Height",
+                            sliderState = state.gameHeight,
+                            range = Game.Configuration.HEIGHT_RANGE,
+                            sideEffect = { state.coerceGameScoreLimit() }
+                        )
                         HeightSpacer(height = 8.dp)
-                        Input(state.gameScoreLimit)
+                        Slider(
+                            text = "Score Limit",
+                            sliderState = state.gameScoreLimit,
+                            range = 1F..Game.Configuration.maxScoreLimit(
+                                state.gameWidth.value,
+                                state.gameHeight.value
+                            ).toFloat()
+                        )
                         HeightSpacer(height = 8.dp)
-                        Row {
-                            Text(text = "Computer opponent")
-                            WidthSpacer(width = 8.dp)
-                            Checkbox(
-                                checked = state.versusComputer.value,
-                                onCheckedChange = { state.versusComputer.value = it })
-                        }
+                        Checkbox(text = "Computer Opponent", checkboxState = state.versusComputer)
+                        HeightSpacer(height = 24.dp)
                         ExpandedRow(arrangement = Arrangement.End) {
                             Button(
                                 text = "Play",
@@ -107,42 +116,61 @@ fun GameConfigurationDialog(activity: AppCompatActivity, state: MainPageState) {
 }
 
 @Composable
-fun Input(inputState: InputState) {
-    ExpandedRow(arrangement = Arrangement.SpaceBetween) {
-        Text(text = inputState.name)
-        WidthSpacer(width = 8.dp)
-        TextField(
-            value = inputState.value.toString(),
-            onValueChange = { inputState.value = if (it.isBlank()) -1 else it.toInt() }
+fun Slider(
+    text: String,
+    sliderState: State<Float>,
+    range: ClosedFloatingPointRange<Float>,
+    sideEffect: () -> Unit = {}
+) {
+    Column {
+        Text(text = "$text: ${sliderState.value.toInt()}")
+        Slider(
+            modifier = ExpandedWidth,
+            position = SliderPosition(
+                initial = sliderState.value,
+                valueRange = range
+            ),
+            onValueChange = {
+                sliderState.value = it
+                sideEffect()
+            }
         )
+    }
+}
+
+@Composable
+fun Checkbox(text: String, checkboxState: State<Boolean>) {
+    ExpandedRow(arrangement = Arrangement.SpaceBetween) {
+        Text(text = text)
+        WidthSpacer(width = 8.dp)
+        Checkbox(
+            checked = checkboxState.value,
+            onCheckedChange = { checkboxState.value = it })
     }
 }
 
 class MainPageState {
     val dialogVisible = +state { false }
-    val gameWidth = InputState("Width", Game.Configuration.Default.width, 4)
-    val gameHeight = InputState("Height", Game.Configuration.Default.height, 4)
-    val gameScoreLimit = InputState("Score limit", Game.Configuration.Default.scoreLimit, 1)
+    val gameWidth = +state { Game.Configuration.DEFAULT_WIDTH.toFloat() }
+    val gameHeight = +state { Game.Configuration.DEFAULT_HEIGHT.toFloat() }
+    val gameScoreLimit = +state { Game.Configuration.DEFAULT_SCORE_LIMIT.toFloat() }
     val versusComputer = +state { true }
+
+    fun coerceGameScoreLimit() {
+        gameScoreLimit.value = gameScoreLimit.value.coerceAtMost(
+            Game.Configuration.maxScoreLimit(
+                gameWidth.value,
+                gameHeight.value
+            ).toFloat()
+        )
+    }
 
     fun generateGameConfiguration(): Game.Configuration {
         return Game.Configuration(
-            width = gameWidth.value,
-            height = gameHeight.value,
-            scoreLimit = gameScoreLimit.value,
+            width = gameWidth.value.toInt(),
+            height = gameHeight.value.toInt(),
+            scoreLimit = gameScoreLimit.value.toInt(),
             versusComputer = versusComputer.value
         )
     }
-}
-
-@Model
-class InputState(
-    val name: String,
-    value: Int,
-    private val minValue: Int
-) {
-    var value = value
-        set(value) {
-            field = value.coerceAtLeast(minValue)
-        }
 }
