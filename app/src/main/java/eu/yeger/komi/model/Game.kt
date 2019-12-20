@@ -1,9 +1,7 @@
 package eu.yeger.komi.model
 
 import androidx.compose.Model
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.io.Serializable
 
 @Model
@@ -13,6 +11,8 @@ class Game(
     val height: Int,
     val scoreLimit: Int
 ) {
+    val scope = CoroutineScope(Dispatchers.Main)
+
     val cellArray by lazy {
         Array(height) { y ->
             Array(width) { x ->
@@ -40,13 +40,25 @@ class Game(
 
     fun occupy(cell: Cell) {
         if (!currentPlayer.isComputer) {
-            CoroutineScope(Dispatchers.Main).launch {
+            scope.launch {
                 turn(cell)
             }
         }
     }
 
-    private suspend fun turn(cell: Cell) {
+    private suspend fun computerTurn(player: Player) {
+        coroutineScope {
+            delay(100)
+            cells
+                .filter { it.isEmpty() }
+                .shuffled()
+                .map { Turn(player = player, cell = it) }
+                .max()
+                ?.also { turn(it.cell) }
+        }
+    }
+
+    private fun turn(cell: Cell) {
         if (turnIsValid(cell)) {
             cell.state = Cell.State.Occupied(currentPlayer)
             turnForPlayer(currentPlayer)
@@ -55,20 +67,12 @@ class Game(
             if (gameOver) return
             currentPlayer = currentPlayer.opponent
             if (currentPlayer.isComputer) {
-                CoroutineScope(Dispatchers.Main).launch {
-                    computerTurn(currentPlayer)
+                val computerPlayer = currentPlayer
+                scope.launch {
+                    computerTurn(computerPlayer)
                 }
             }
         }
-    }
-
-    private suspend fun computerTurn(player: Player) {
-        cells
-            .shuffled()
-            .filter { it.isEmpty() }
-            .map { Turn(player = player, cell = it) }
-            .max()
-            ?.also { turn(it.cell) }
     }
 
     private fun turnIsValid(cell: Cell): Boolean {
@@ -116,7 +120,7 @@ class Game(
                         .any { neighbor -> neighbor in safeCells && neighbor.liberates(it, turn) }
                 }
                 .also {
-                    if (it.isEmpty()) {
+                    if (it.isEmpty()) { // no more liberties granted, remaining unchecked cells can not have liberties
                         turn
                             ?.takeIf {
                                 this === turn.player && turn.cell.neighbors.none { neighbor -> neighbor.isEmpty() || neighbor in safeCells }
@@ -124,7 +128,7 @@ class Game(
                                 uncheckedCells.add(turn.cell)
                             }
                         return uncheckedCells.toList()
-                    } // no more liberties granted, remaining unchecked cells can not have liberties
+                    }
                 }
                 .forEach {
                     safeCells.add(it)
@@ -209,13 +213,33 @@ class Game(
         override fun compareTo(other: Turn): Int {
             if (this.player !== other.player) return 0
 
-            return losses(other).smallerOr {
-                gains(other).biggerOr {
-                    potentialLosses(other).smallerOr {
-                        inherentlySafeCells(other).biggerOr {
-                            nonEmptyNeighbors(other).biggerOr {
-                                neighbors(other).biggerOr {
-                                    0
+            val gains = this.gains to other.gains
+            val losses by lazy { this.losses to other.losses }
+            val potentialLosses by lazy { this.potentialLosses to other.potentialLosses }
+            val neighbors by lazy { this.cell.neighbors.size to other.cell.neighbors.size }
+            val friendlyNeighbors by lazy { this.friendlyNeighbors to other.friendlyNeighbors }
+            val opposedNeighbors by lazy { this.opposedNeighbors to other.opposedNeighbors }
+            val emptyNeighbors by lazy { this.emptyNeighbors to other.emptyNeighbors }
+            val nonOpposedNeighbors by lazy { this.occupiedNeighbors to other.occupiedNeighbors }
+            val inherentLiberties by lazy { this.inherentLiberties to other.inherentLiberties }
+            val opposedInherentLiberties by lazy { this.opposedInherentLiberties to other.opposedInherentLiberties }
+            val lowestOpposedInherentLiberties by lazy { this.lowestOpposedInherentLiberties to other.lowestOpposedInherentLiberties }
+
+            return more(gains) or {
+                less(losses) or {
+                    less(potentialLosses) or {
+                        less(opposedInherentLiberties) or {
+                            less(lowestOpposedInherentLiberties) or {
+                                more(nonOpposedNeighbors) or {
+                                    more(inherentLiberties) or {
+                                        more(friendlyNeighbors) or {
+                                            more(emptyNeighbors) or {
+                                                more(opposedNeighbors) or {
+                                                    more(neighbors)
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -224,53 +248,64 @@ class Game(
             }
         }
 
-        val losses by lazy { this.player.cellsWithoutLiberties(this).size }
-        private fun losses(other: Turn) = this.losses to other.losses
-
-        val gains by lazy { this.player.opponent.cellsWithoutLiberties(this).size }
-        private fun gains(other: Turn) = this.gains to other.gains
-
-        val potentialLosses by lazy {
-            this.player.cellsWithoutLiberties(
-                Turn(
-                    this.player.opponent,
-                    this.cell
-                )
-            ).size
+        private val gains by lazy {
+            this.player.opponent.cellsWithoutLiberties(this).size
         }
 
-        private fun potentialLosses(other: Turn) = this.potentialLosses to other.potentialLosses
-
-        val inherentlySafeCells by lazy {
-            cells.filter {
-                it.state.player === this.player && it.hasEmptyNeighbor(
-                    except = this.cell
-                )
-            }.size
+        private val losses by lazy {
+            this.player.cellsWithoutLiberties(this).size
         }
 
-        private fun inherentlySafeCells(other: Turn) =
-            this.inherentlySafeCells to other.inherentlySafeCells
-
-        private fun neighbors(other: Turn) = this.cell.neighbors.size to other.cell.neighbors.size
-
-        val emptyNeighbors by lazy { this.cell.neighbors.count { it.isOccupied() } }
-        private fun nonEmptyNeighbors(other: Turn) = this.emptyNeighbors to other.emptyNeighbors
-
-        private inline fun Pair<Int, Int>.biggerOr(block: () -> Int): Int {
-            return if (first == second) {
-                block()
-            } else {
-                first - second
-            }
+        private val potentialLosses by lazy {
+            this.player.cellsWithoutLiberties(Turn(this.player.opponent, this.cell)).size
         }
 
-        private inline fun Pair<Int, Int>.smallerOr(block: () -> Int): Int {
-            return if (first == second) {
-                block()
-            } else {
-                second - first
-            }
+        private val friendlyNeighbors by lazy {
+            this.cell.neighbors.count { it.state.player === this.player }
         }
+
+        private val opposedNeighbors by lazy {
+            this.cell.neighbors.count { it.state.player === this.player.opponent }
+        }
+
+        private val emptyNeighbors by lazy {
+            this.cell.neighbors.count { it.isEmpty() }
+        }
+
+        private val occupiedNeighbors by lazy {
+            this.cell.neighbors.count { it.state.player !== this.player.opponent }
+        }
+
+        private val inherentLiberties by lazy {
+            cells
+                .filter { it.state.player === this.player }
+                .flatMap { it.neighbors.filter { neighbor -> neighbor.isEmpty() && neighbor !== this.cell } }
+                .distinct()
+                .size
+        }
+
+        private val opposedInherentLiberties by lazy {
+            cells
+                .filter { it.state.player === this.player.opponent }
+                .flatMap { it.neighbors.filter { neighbor -> neighbor.isEmpty() && neighbor !== this.cell } }
+                .distinct()
+                .size
+        }
+
+        private val lowestOpposedInherentLiberties by lazy {
+            this.cell.neighbors
+                .filter { it.state.player === this.player.opponent }
+                .map {
+                    it.neighbors.filter { neighbor -> neighbor.isEmpty() && neighbor !== this.cell }
+                        .size
+                }
+                .min() ?: Int.MAX_VALUE
+        }
+
+        private fun more(pair: Pair<Int, Int>) = pair.first - pair.second
+
+        private fun less(pair: Pair<Int, Int>) = pair.second - pair.first
+
+        private inline infix fun Int.or(block: () -> Int) = if (this != 0) this else block()
     }
 }
