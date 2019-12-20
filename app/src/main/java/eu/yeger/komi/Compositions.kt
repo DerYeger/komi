@@ -43,7 +43,7 @@ fun ElevatedCard(
         shape = RoundedCornerShape(4.dp),
         elevation = elevation
     ) {
-        Padding(padding = 8.dp) {
+        Padding(padding = 4.dp) {
             children()
         }
     }
