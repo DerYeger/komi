@@ -43,7 +43,11 @@ fun GamePage(activity: AppCompatActivity, game: Game) {
     ThemedPage {
         Align(alignment = Alignment.TopCenter) {
             Column(modifier = ExpandedHeight) {
-                PlayerCards(game)
+                if (game.scoreLimit in 8..15) {
+                    VerticalPlayerCards(game = game)
+                } else {
+                    HorizontalPlayerCards(game = game, useIcons = game.scoreLimit <= 7)
+                }
                 Center {
                     Board(game)
                 }
@@ -54,27 +58,64 @@ fun GamePage(activity: AppCompatActivity, game: Game) {
 }
 
 @Composable
-fun PlayerCards(game: Game) {
+fun HorizontalPlayerCards(game: Game, useIcons: Boolean) {
     ExpandedRow(arrangement = Arrangement.SpaceBetween) {
-        PlayerCard(game = game, player = game.players.first)
-        PlayerCard(game = game, player = game.players.second)
+        PlayerCard(game = game, player = game.players.first, useIcons = useIcons)
+        PlayerCard(game = game, player = game.players.second, useIcons = useIcons)
     }
 }
 
 @Composable
-fun PlayerCard(game: Game, player: Player) {
+fun VerticalPlayerCards(game: Game) {
+    Column {
+        CenteredRow {
+            PlayerCard(game = game, player = game.players.first, useIcons = true)
+        }
+        CenteredRow {
+            PlayerCard(game = game, player = game.players.second, useIcons = true)
+        }
+    }
+}
+
+@Composable
+fun PlayerCard(game: Game, player: Player, useIcons: Boolean) {
     KomiCard(
         border = if (game.currentPlayer === player) Border(player.color, 2.dp) else null,
         color = Color.Transparent,
         elevation = 0.dp,
         modifier = Spacing(8.dp)
     ) {
-        Text(
-            modifier = Spacing(4.dp),
-            text = "Score: ${player.score}",
-            style = TextStyle(color = player.color)
-        )
+        if (useIcons) {
+            PlayerCardIcons(game = game, player = player)
+        } else {
+            PlayerCardText(player = player)
+        }
     }
+}
+
+@Composable
+fun PlayerCardIcons(game: Game, player: Player) {
+    Row {
+        for (i in 1..game.scoreLimit) {
+            Padding(padding = 2.dp) {
+                FloatingActionButton(
+                    modifier = Size(20.dp, 20.dp),
+                    color = if (player.score >= i) player.color else Color.DarkGray,
+                    elevation = 0.dp,
+                    children = { }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun PlayerCardText(player: Player) {
+    Text(
+        modifier = Spacing(4.dp),
+        text = "Score: ${player.score}",
+        style = TextStyle(color = player.color)
+    )
 }
 
 @Composable
