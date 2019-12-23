@@ -63,12 +63,14 @@ fun PlayerCards(game: Game) {
 
 @Composable
 fun PlayerCard(game: Game, player: Player) {
-    ElevatedCard(
+    KomiCard(
         border = if (game.currentPlayer === player) Border(player.color, 2.dp) else null,
         color = Color.Transparent,
-        elevation = 0.dp
+        elevation = 0.dp,
+        modifier = Spacing(8.dp)
     ) {
         Text(
+            modifier = Spacing(4.dp),
             text = "Score: ${player.score}",
             style = TextStyle(color = player.color)
         )
@@ -111,10 +113,10 @@ fun GameOverDialog(activity: AppCompatActivity, game: Game) {
 
 @Composable
 fun Board(game: Game) {
-    CenteredRow {
-        ElevatedCard {
-            HorizontalScroller {
-                VerticalScroller {
+    CenteredRow(modifier = Spacing(8.dp)) {
+        HorizontalScroller {
+            VerticalScroller {
+                KomiCard {
                     Column(modifier = ExpandedHeight) {
                         for (row in game.cellArray) {
                             ExpandedRow {

@@ -8,7 +8,10 @@ import androidx.ui.core.dp
 import androidx.ui.foundation.shape.border.Border
 import androidx.ui.foundation.shape.corner.RoundedCornerShape
 import androidx.ui.graphics.Color
-import androidx.ui.layout.*
+import androidx.ui.layout.Arrangement
+import androidx.ui.layout.ExpandedWidth
+import androidx.ui.layout.Padding
+import androidx.ui.layout.Row
 import androidx.ui.material.MaterialTheme
 import androidx.ui.material.surface.Card
 
@@ -24,12 +27,17 @@ fun ExpandedRow(
 }
 
 @Composable
-fun CenteredRow(children: @Composable() () -> Unit) {
-    ExpandedRow(arrangement = Arrangement.Center, children = children)
+fun CenteredRow(
+    modifier: Modifier = Modifier.None,
+    children: @Composable() () -> Unit
+) {
+    ExpandedRow(modifier = modifier, arrangement = Arrangement.Center) {
+        children()
+    }
 }
 
 @Composable
-fun ElevatedCard(
+fun KomiCard(
     modifier: Modifier = Modifier.None,
     border: Border? = null,
     color: Color = (+MaterialTheme.colors()).surface,
@@ -37,7 +45,7 @@ fun ElevatedCard(
     children: @Composable() () -> Unit
 ) {
     Card(
-        modifier = Spacing(8.dp).wraps(modifier),
+        modifier = modifier,
         border = border,
         color = color,
         shape = RoundedCornerShape(4.dp),

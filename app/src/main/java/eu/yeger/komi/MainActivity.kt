@@ -71,7 +71,7 @@ fun GameConfigurationDialog(activity: AppCompatActivity, state: MainPageState) {
     if (state.dialogVisible.value) {
         Dialog(onCloseRequest = { state.dialogVisible.value = false }) {
             AppTheme {
-                ElevatedCard(modifier = Width(400.dp)) {
+                KomiCard(modifier = Width(400.dp)) {
                     Column(modifier = Spacing(8.dp)) {
                         Slider(
                             text = "Width",
