@@ -11,7 +11,7 @@ class Game(
     val height: Int,
     val scoreLimit: Int
 ) {
-    val scope = CoroutineScope(Dispatchers.Main)
+    private val scope = CoroutineScope(Dispatchers.Main)
 
     val cellArray by lazy {
         Array(height) { y ->
@@ -107,33 +107,43 @@ class Game(
     private fun Player.cellsWithoutLiberties(turn: Turn? = null): List<Cell> {
         val safeCells = cells
             .filter { it.state.player === this && it.hasEmptyNeighbor(except = turn?.cell) }
-            .toMutableSet() // collect occupied cells with empty neighbors, as those are inherently safe
+            .toSet() // collect occupied cells with empty neighbors, as those are inherently safe
 
         val uncheckedCells = cells
             .filter { it.state.player === this && !it.hasEmptyNeighbor(except = turn?.cell) }
-            .toMutableSet() // collect occupied cells without empty neighbors
+            .toSet() // collect occupied cells without empty neighbors
 
-        while (true) {
-            uncheckedCells
-                .filter {
-                    it.neighbors
-                        .any { neighbor -> neighbor in safeCells && neighbor.liberates(it, turn) }
+        return cellsWithoutLiberties(
+            safeCells = safeCells,
+            uncheckedCells = uncheckedCells,
+            turn = turn
+        )
+    }
+
+    private tailrec fun Player.cellsWithoutLiberties(
+        safeCells: Set<Cell>,
+        uncheckedCells: Set<Cell>,
+        turn: Turn?
+    ): List<Cell> {
+        uncheckedCells.filter {
+            it.neighbors.any { neighbor ->
+                neighbor in safeCells && neighbor.liberates(it, turn)
+            }
+        }.also {
+            return when (it.isEmpty()) {
+                true -> { // no more liberties granted, remaining unchecked cells can not have liberties
+                    turn?.takeIf { turn ->
+                        this === turn.player && turn.cell.neighbors.none { neighbor -> neighbor.isEmpty() || neighbor in safeCells }
+                    }?.let { turn ->
+                        uncheckedCells.toList() + turn.cell
+                    } ?: uncheckedCells.toList()
                 }
-                .also {
-                    if (it.isEmpty()) { // no more liberties granted, remaining unchecked cells can not have liberties
-                        turn
-                            ?.takeIf {
-                                this === turn.player && turn.cell.neighbors.none { neighbor -> neighbor.isEmpty() || neighbor in safeCells }
-                            }?.also { turn ->
-                                uncheckedCells.add(turn.cell)
-                            }
-                        return uncheckedCells.toList()
-                    }
-                }
-                .forEach {
-                    safeCells.add(it)
-                    uncheckedCells.remove(it)
-                }
+                false -> cellsWithoutLiberties(
+                    safeCells = safeCells + it,
+                    uncheckedCells = uncheckedCells - it,
+                    turn = turn
+                )
+            }
         }
     }
 
