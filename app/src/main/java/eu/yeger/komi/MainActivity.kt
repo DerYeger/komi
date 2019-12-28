@@ -56,7 +56,7 @@ fun MainPage(activity: AppCompatActivity) {
                 CenteredRow {
                     Button(
                         text = "Online",
-                        onClick = { activity.startActivity(LobbyActivity::class) },
+                        onClick = { activity.startActivity(LobbyBrowserActivity::class) },
                         modifier = Width(100.dp)
                     )
                 }
