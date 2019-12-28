@@ -21,7 +21,7 @@ import okhttp3.*
 class LobbyActivity : AppCompatActivity() {
 
     private val lobbyModel = LobbyModel()
-    private val request: Request = Request.Builder().url("ws://yeger.eu:8080/lobby").build()
+    private val request: Request = Request.Builder().url("ws://${BuildConfig.BACKEND_URL}/lobby").build()
     private val webSocket: WebSocket
 
     init {
