@@ -55,6 +55,14 @@ fun MainPage(activity: AppCompatActivity) {
                 HeightSpacer(height = 16.dp)
                 CenteredRow {
                     Button(
+                        text = "Online",
+                        onClick = { activity.startActivity(LobbyActivity::class) },
+                        modifier = Width(100.dp)
+                    )
+                }
+                HeightSpacer(height = 16.dp)
+                CenteredRow {
+                    Button(
                         text = "Custom",
                         onClick = { state.dialogVisible.value = true },
                         modifier = Width(100.dp)
