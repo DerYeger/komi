@@ -36,6 +36,12 @@ class LobbyBrowserMessageHandler(private val lobbyBrowserModel: LobbyBrowserMode
         }
     }
 
+    override fun onError(error: String) {
+        scope.launch {
+            lobbyBrowserModel.error = error
+        }
+    }
+
     private fun setLobbies(lobbies: List<Lobby>) {
         scope.launch {
             lobbyBrowserModel.lobbies = lobbies

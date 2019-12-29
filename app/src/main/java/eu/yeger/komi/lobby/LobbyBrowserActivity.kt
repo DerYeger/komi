@@ -7,16 +7,16 @@ import eu.yeger.komi.network.WebSocketManager
 
 class LobbyBrowserActivity : AppCompatActivity() {
 
-    private val lobbyModel = LobbyBrowserModel()
+    private val lobbyBrowserModel = LobbyBrowserModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WebSocketManager.apply {
             start()
-            bind("lobby", LobbyBrowserMessageHandler(lobbyModel))
+            bind("lobby", LobbyBrowserMessageHandler(lobbyBrowserModel))
         }
         setContent {
-            LobbyPage(lobbyModel)
+            LobbyPage(lobbyBrowserModel)
         }
     }
 

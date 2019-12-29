@@ -15,7 +15,7 @@ import eu.yeger.komi.network.Message
 import eu.yeger.komi.network.WebSocketManager
 
 @Composable
-fun LobbyPage(lobbyModel: LobbyBrowserModel) {
+fun LobbyPage(lobbyBrowserModel: LobbyBrowserModel) {
     ThemedPage {
         Column(modifier = ExpandedHeight) {
             CenteredRow {
@@ -25,14 +25,14 @@ fun LobbyPage(lobbyModel: LobbyBrowserModel) {
                 )
             }
             HeightSpacer(height = 8.dp)
-            if (WebSocketManager.error === null) {
-                CreateLobbyRow(lobbyModel)
-                HeightSpacer(height = 8.dp)
-                LobbyList(lobbyModel)
+            if (lobbyBrowserModel.error === null) {
+                CreateLobbyRow(lobbyBrowserModel)
+                HeightSpacer(height = 24.dp)
+                LobbyList(lobbyBrowserModel)
             } else {
                 CenteredRow {
                     Text(
-                        text = "An error occurred: ${WebSocketManager.error}",
+                        text = "An error occurred: ${lobbyBrowserModel.error}",
                         style = TextStyle(color = errorColor)
                     )
                 }
@@ -42,12 +42,12 @@ fun LobbyPage(lobbyModel: LobbyBrowserModel) {
 }
 
 @Composable
-fun CreateLobbyRow(lobbyModel: LobbyBrowserModel) {
+fun CreateLobbyRow(lobbyBrowserModel: LobbyBrowserModel) {
     KomiCard {
         ExpandedRow(arrangement = Arrangement.SpaceBetween) {
             TextField(
-                value = lobbyModel.lobbyNameInput,
-                onValueChange = { lobbyModel.lobbyNameInput = it },
+                value = lobbyBrowserModel.lobbyNameInput,
+                onValueChange = { lobbyBrowserModel.lobbyNameInput = it },
                 modifier = Width(150.dp)
             )
             Button(
@@ -56,7 +56,7 @@ fun CreateLobbyRow(lobbyModel: LobbyBrowserModel) {
                     WebSocketManager.send(
                         Message(
                             "createLobby",
-                            lobbyModel.lobbyNameInput
+                            lobbyBrowserModel.lobbyNameInput
                         )
                     )
                 },
@@ -67,10 +67,10 @@ fun CreateLobbyRow(lobbyModel: LobbyBrowserModel) {
 }
 
 @Composable
-fun LobbyList(lobbyModel: LobbyBrowserModel) {
+fun LobbyList(lobbyBrowserModel: LobbyBrowserModel) {
     VerticalScroller {
         Column {
-            for (lobby in lobbyModel.lobbies) {
+            for (lobby in lobbyBrowserModel.lobbies) {
                 CenteredRow {
                     LobbyView(lobby = lobby)
                 }

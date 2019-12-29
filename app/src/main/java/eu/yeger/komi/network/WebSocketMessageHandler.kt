@@ -6,4 +6,5 @@ interface WebSocketMessageHandler {
     fun onBind(webSocket: WebSocket)
     fun onUnbind()
     fun onMessage(webSocket: WebSocket, message: Message)
+    fun onError(error: String)
 }

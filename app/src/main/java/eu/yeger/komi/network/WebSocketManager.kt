@@ -1,97 +1,145 @@
 package eu.yeger.komi.network
 
-import androidx.compose.Model
 import eu.yeger.komi.BuildConfig
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import okhttp3.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
-@Model
-object WebSocketManager : CoroutineScope {
-    override val coroutineContext = Dispatchers.Main
+object WebSocketManager : WebSocketListener() {
 
-    private var webSocket: WebSocket? = null
-    private val handlers = HashMap<String, WebSocketMessageHandler>()
+    private val client = OkHttpClient.Builder().connectTimeout(1, TimeUnit.SECONDS).build()
 
-    var error: String? = null
-        set(value) {
-            launch {
-                field = value
+    sealed class State {
+        object Inactive : State()
+
+        class Active(val webSocket: WebSocket) : State() {
+            val handlers = ConcurrentHashMap<String, WebSocketMessageHandler>()
+
+            fun terminate(code: Int, reason: String) {
+                handlers.keys.forEach { unbind(it) }
+                webSocket.close(code, reason)
             }
         }
+    }
+
+    @Volatile
+    var state: State = State.Inactive
+        private set
 
     //
     // Lifecycle
     //
 
+    @Synchronized
     fun start() {
-        if (webSocket !== null) return
-
-        error = null
-        val request: Request = Request.Builder().url("ws://${BuildConfig.BACKEND_URL}").build()
-        val client = OkHttpClient()
-        webSocket = client.newWebSocket(request, ManagedWebSocketListener)
-        client.dispatcher().executorService().shutdown()
+        when (state) {
+            is State.Inactive -> {
+                val request: Request =
+                    Request.Builder().url("ws://${BuildConfig.BACKEND_URL}").build()
+                val webSocket = client.newWebSocket(request, this)
+                state = State.Active(webSocket = webSocket)
+            }
+            is State.Active -> throw WebSocketException("WebSocketManager is active, unable to start")
+        }
     }
 
+    @Synchronized
     fun terminate(code: Int = 1000, reason: String = "Shutdown") {
-        handlers.keys.forEach { unbind(it) }
-        webSocket?.close(code, reason)
-        webSocket = null
+        when (val state = state) {
+            is State.Inactive -> throw WebSocketException("WebSocketManager is inactive, unable to terminate")
+            is State.Active -> {
+                state.terminate(code = code, reason = reason)
+                this.state = State.Inactive
+            }
+        }
     }
 
+    @Synchronized
     fun restart() {
-        terminate()
-        start()
+        when (state) {
+            is State.Inactive -> throw WebSocketException("WebSocketManager is inactive, unable to restart")
+            is State.Active -> {
+                terminate()
+                start()
+            }
+        }
+    }
+
+    private fun onError(error: String, code: Int, reason: String) {
+        when (val state = state) {
+            is State.Inactive -> throw WebSocketException("WebSocketManager is inactive, unable receive error")
+            is State.Active -> {
+                state.handlers.values.forEach { it.onError(error) }
+                terminate(code, reason)
+            }
+        }
     }
 
     //
     // Handler binding
     //
 
+    @Synchronized
     fun bind(identifier: String, handler: WebSocketMessageHandler) {
-        val webSocket = webSocket
-        if (webSocket === null) throw WebSocketException("Not yet started")
-        handlers[identifier] = handler
-        handler.onBind(webSocket = webSocket)
+        when (val state = state) {
+            is State.Active -> {
+                state.handlers[identifier] = handler
+                handler.onBind(webSocket = state.webSocket)
+            }
+        }
     }
 
+    @Synchronized
     fun unbind(identifier: String) {
-        handlers.remove(identifier)?.onUnbind()
-        if (handlers.isEmpty()) terminate()
+        when (val state = state) {
+            is State.Active -> {
+                state.handlers.remove(identifier)?.onUnbind()
+                if (state.handlers.isEmpty()) terminate()
+            }
+        }
     }
 
     //
     // Message sending
     //
 
-    fun send(message: Message) = webSocket?.send(message)
+    fun send(message: Message) {
+        when (val state = state) {
+            is State.Inactive -> throw WebSocketException("WebSocketManager is inactive, unable to send message")
+            is State.Active -> state.webSocket.send(message)
+        }
+    }
 
     //
     // Listener
     //
 
-    private object ManagedWebSocketListener : WebSocketListener() {
-        override fun onMessage(webSocket: WebSocket, text: String) {
-            val message: Message? = moshi.adapter(Message::class.java).fromJson(text)
-            if (message !== null) {
-                handlers.values.forEach { it.onMessage(webSocket = webSocket, message = message) }
+    override fun onMessage(webSocket: WebSocket, text: String) {
+        when (val state = state) {
+            is State.Active -> {
+                val message: Message? = moshi.adapter(Message::class.java).fromJson(text)
+                if (message !== null) {
+                    state.handlers.values.forEach {
+                        it.onMessage(webSocket = webSocket, message = message)
+                    }
+                }
             }
         }
+    }
 
-        override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-            webSocket.close(1002, "Connection closing")
+    override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+        when (state) {
+            is State.Active -> terminate(code = code, reason = reason)
         }
+    }
 
-        override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-            if (code != 1000) {
-                error = "Connection closed $code"
-            }
+    override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+        if (code != 1000) {
+            onError(error = "Connection closed $code", code = code, reason = reason)
         }
+    }
 
-        override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-            error = t.message ?: "Unknown error"
-        }
+    override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+        onError(error = t.message ?: "Unknown error", code = 1011, reason = t.message ?: "Failure")
     }
 }

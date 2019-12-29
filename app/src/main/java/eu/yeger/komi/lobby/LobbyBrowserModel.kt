@@ -17,4 +17,5 @@ data class Lobby(
 class LobbyBrowserModel {
     var lobbies: List<Lobby> = listOf()
     var lobbyNameInput: String = "MyLobby"
+    var error: String? = null
 }
