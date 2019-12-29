@@ -48,8 +48,8 @@ object WebSocketManager : WebSocketListener() {
         when (val state = state) {
             is State.Inactive -> throw WebSocketException("WebSocketManager is inactive, unable to terminate")
             is State.Active -> {
-                state.terminate(code = code, reason = reason)
                 this.state = State.Inactive
+                state.terminate(code = code, reason = reason)
             }
         }
     }
@@ -84,7 +84,7 @@ object WebSocketManager : WebSocketListener() {
         when (val state = state) {
             is State.Active -> {
                 state.handlers[identifier] = handler
-                handler.onBind(webSocket = state.webSocket)
+                handler.onBind()?.also { send(it) }
             }
         }
     }
@@ -93,7 +93,7 @@ object WebSocketManager : WebSocketListener() {
     fun unbind(identifier: String) {
         when (val state = state) {
             is State.Active -> {
-                state.handlers.remove(identifier)?.onUnbind()
+                state.handlers.remove(identifier)?.onUnbind()?.also { send(it) }
                 if (state.handlers.isEmpty()) terminate()
             }
         }
@@ -120,7 +120,7 @@ object WebSocketManager : WebSocketListener() {
                 val message: Message? = moshi.adapter(Message::class.java).fromJson(text)
                 if (message !== null) {
                     state.handlers.values.forEach {
-                        it.onMessage(webSocket = webSocket, message = message)
+                        it.onMessage(message = message)?.also { message -> webSocket.send(message) }
                     }
                 }
             }

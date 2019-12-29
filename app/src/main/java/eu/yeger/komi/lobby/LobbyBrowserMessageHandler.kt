@@ -17,14 +17,12 @@ class LobbyBrowserMessageHandler(private val lobbyBrowserModel: LobbyBrowserMode
     private val lobbyListAdapter: JsonAdapter<List<Lobby>> =
         moshi.adapter(Types.newParameterizedType(List::class.java, Lobby::class.java))
 
-    override fun onBind(webSocket: WebSocket) {
-        webSocket.send(Message("join", "Placeholder"))
-    }
+    override fun onBind() = Message("join", "Placeholder")
 
-    override fun onUnbind() = Unit
+    override fun onUnbind(): Message? = null
 
-    override fun onMessage(webSocket: WebSocket, message: Message) {
-        when (message.type) {
+    override fun onMessage(message: Message): Message? {
+        return when (message.type) {
             "lobbies" -> lobbyListAdapter.fromJson(message.data)?.let { setLobbies(it) }
 //            "error" -> scope.launch{
 //                Toast.makeText(
@@ -33,7 +31,9 @@ class LobbyBrowserMessageHandler(private val lobbyBrowserModel: LobbyBrowserMode
 //                    Toast.LENGTH_SHORT
 //                ).show()
 //            }
+            else -> null
         }
+
     }
 
     override fun onError(error: String) {
@@ -42,9 +42,10 @@ class LobbyBrowserMessageHandler(private val lobbyBrowserModel: LobbyBrowserMode
         }
     }
 
-    private fun setLobbies(lobbies: List<Lobby>) {
+    private fun setLobbies(lobbies: List<Lobby>): Message? {
         scope.launch {
             lobbyBrowserModel.lobbies = lobbies
         }
+        return null
     }
 }
