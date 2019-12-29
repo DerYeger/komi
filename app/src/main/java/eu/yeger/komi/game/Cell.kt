@@ -1,4 +1,4 @@
-package eu.yeger.komi.model
+package eu.yeger.komi.game
 
 import androidx.compose.Model
 
@@ -37,5 +37,3 @@ data class Cell(
         class Occupied(override val player: Player) : State()
     }
 }
-
-

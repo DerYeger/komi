@@ -1,4 +1,4 @@
-package eu.yeger.komi
+package eu.yeger.komi.common
 
 import androidx.compose.Composable
 import androidx.compose.unaryPlus
@@ -31,7 +31,10 @@ fun CenteredRow(
     modifier: Modifier = Modifier.None,
     children: @Composable() () -> Unit
 ) {
-    ExpandedRow(modifier = modifier, arrangement = Arrangement.Center) {
+    ExpandedRow(
+        modifier = modifier,
+        arrangement = Arrangement.Center
+    ) {
         children()
     }
 }

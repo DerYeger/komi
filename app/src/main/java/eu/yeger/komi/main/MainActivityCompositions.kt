@@ -1,32 +1,26 @@
-package eu.yeger.komi
+package eu.yeger.komi.main
 
-import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.Composable
 import androidx.compose.State
-import androidx.compose.state
 import androidx.compose.unaryPlus
 import androidx.ui.core.Text
 import androidx.ui.core.dp
-import androidx.ui.core.setContent
 import androidx.ui.foundation.Dialog
 import androidx.ui.layout.*
-import androidx.ui.material.*
+import androidx.ui.material.Button
+import androidx.ui.material.MaterialTheme
+import androidx.ui.material.SliderPosition
 import androidx.ui.text.TextStyle
-import eu.yeger.komi.model.Game
-
-class MainActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            MainPage(this)
-        }
-    }
-}
+import eu.yeger.komi.common.*
+import eu.yeger.komi.game.Game
+import eu.yeger.komi.lobby.LobbyBrowserActivity
+import eu.yeger.komi.common.startActivity
+import eu.yeger.komi.common.startGameWithConfiguration
 
 @Composable
 fun MainPage(activity: AppCompatActivity) {
-    val state = MainPageState()
+    val state = MainActivityModel()
     ThemedPage {
         Column(modifier = ExpandedHeight) {
             CenteredRow {
@@ -70,12 +64,15 @@ fun MainPage(activity: AppCompatActivity) {
                 }
             }
         }
-        GameConfigurationDialog(activity = activity, state = state)
+        GameConfigurationDialog(
+            activity = activity,
+            state = state
+        )
     }
 }
 
 @Composable
-fun GameConfigurationDialog(activity: AppCompatActivity, state: MainPageState) {
+fun GameConfigurationDialog(activity: AppCompatActivity, state: MainActivityModel) {
     if (state.dialogVisible.value) {
         Dialog(onCloseRequest = { state.dialogVisible.value = false }) {
             AppTheme {
@@ -104,7 +101,10 @@ fun GameConfigurationDialog(activity: AppCompatActivity, state: MainPageState) {
                             ).toFloat()
                         )
                         HeightSpacer(height = 8.dp)
-                        Checkbox(text = "Computer Opponent", checkboxState = state.versusComputer)
+                        Checkbox(
+                            text = "Computer Opponent",
+                            checkboxState = state.versusComputer
+                        )
                         HeightSpacer(height = 24.dp)
                         ExpandedRow(arrangement = Arrangement.End) {
                             Button(
@@ -133,7 +133,7 @@ fun Slider(
 ) {
     Column {
         Text(text = "$text: ${sliderState.value.toInt()}")
-        Slider(
+        androidx.ui.material.Slider(
             modifier = ExpandedWidth,
             position = SliderPosition(
                 initial = sliderState.value,
@@ -152,55 +152,8 @@ fun Checkbox(text: String, checkboxState: State<Boolean>) {
     ExpandedRow(arrangement = Arrangement.SpaceBetween) {
         Text(text = text)
         WidthSpacer(width = 8.dp)
-        Checkbox(
+        androidx.ui.material.Checkbox(
             checked = checkboxState.value,
             onCheckedChange = { checkboxState.value = it })
     }
-}
-
-class MainPageState {
-    val dialogVisible = +state { false }
-
-    val gameWidth = +state {
-        Preferences.retrieveInt("game_width", Game.Configuration.DEFAULT_WIDTH).toFloat()
-    }
-
-    val gameHeight = +state {
-        Preferences.retrieveInt("game_height", Game.Configuration.DEFAULT_HEIGHT).toFloat()
-    }
-
-    val gameScoreLimit = +state {
-        Preferences.retrieveInt("game_score_limit", Game.Configuration.DEFAULT_SCORE_LIMIT)
-            .toFloat()
-    }
-
-    val versusComputer = +state {
-        Preferences.retrieveBoolean("computer_opponent", true)
-    }
-
-    fun coerceGameScoreLimit() {
-        gameScoreLimit.value = gameScoreLimit.value.coerceAtMost(
-            Game.Configuration.maxScoreLimit(
-                gameWidth.value,
-                gameHeight.value
-            ).toFloat()
-        )
-    }
-
-    fun storeToPreferences() {
-        Preferences.apply {
-            storeInt("game_width", gameWidth.value.toInt())
-            storeInt("game_height", gameHeight.value.toInt())
-            storeInt("game_score_limit", gameScoreLimit.value.toInt())
-            storeBoolean("computer_opponent", versusComputer.value)
-        }
-    }
-
-    fun generateGameConfiguration() =
-        Game.Configuration(
-            width = gameWidth.value.toInt(),
-            height = gameHeight.value.toInt(),
-            scoreLimit = gameScoreLimit.value.toInt(),
-            versusComputer = versusComputer.value
-        )
 }

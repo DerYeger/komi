@@ -1,4 +1,4 @@
-package eu.yeger.komi.model
+package eu.yeger.komi.game
 
 import androidx.compose.Model
 import kotlinx.coroutines.*

@@ -1,12 +1,10 @@
-package eu.yeger.komi
+package eu.yeger.komi.game
 
-import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.Composable
 import androidx.ui.core.Alignment
 import androidx.ui.core.Text
 import androidx.ui.core.dp
-import androidx.ui.core.setContent
 import androidx.ui.foundation.HorizontalScroller
 import androidx.ui.foundation.VerticalScroller
 import androidx.ui.foundation.shape.border.Border
@@ -17,25 +15,19 @@ import androidx.ui.material.Button
 import androidx.ui.material.FloatingActionButton
 import androidx.ui.text.TextStyle
 import androidx.ui.tooling.preview.Preview
-import eu.yeger.komi.model.Cell
-import eu.yeger.komi.model.Game
-import eu.yeger.komi.model.Player
-
-class GameActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val configuration: Game.Configuration =
-            intent.getKomiExtra("game_configuration") ?: Game.Configuration.Default
-        setContent {
-            GamePage(activity = this, game = configuration.generateGame())
-        }
-    }
-}
+import eu.yeger.komi.common.CenteredRow
+import eu.yeger.komi.common.ExpandedRow
+import eu.yeger.komi.common.KomiCard
+import eu.yeger.komi.common.ThemedPage
+import eu.yeger.komi.common.startGameWithConfiguration
 
 @Preview("GamePage")
 @Composable
 fun DefaultPreview() {
-    GamePage(activity = GameActivity(), game = Game.Configuration.Default.generateGame())
+    GamePage(
+        activity = GameActivity(),
+        game = Game.Configuration.Default.generateGame()
+    )
 }
 
 @Composable
@@ -46,7 +38,10 @@ fun GamePage(activity: AppCompatActivity, game: Game) {
                 if (game.scoreLimit in 8..15) {
                     VerticalPlayerCards(game = game)
                 } else {
-                    HorizontalPlayerCards(game = game, useIcons = game.scoreLimit <= 7)
+                    HorizontalPlayerCards(
+                        game = game,
+                        useIcons = game.scoreLimit <= 7
+                    )
                 }
                 Center {
                     Board(game)
@@ -60,8 +55,16 @@ fun GamePage(activity: AppCompatActivity, game: Game) {
 @Composable
 fun HorizontalPlayerCards(game: Game, useIcons: Boolean) {
     ExpandedRow(arrangement = Arrangement.SpaceBetween) {
-        PlayerCard(game = game, player = game.players.first, useIcons = useIcons)
-        PlayerCard(game = game, player = game.players.second, useIcons = useIcons)
+        PlayerCard(
+            game = game,
+            player = game.players.first,
+            useIcons = useIcons
+        )
+        PlayerCard(
+            game = game,
+            player = game.players.second,
+            useIcons = useIcons
+        )
     }
 }
 
@@ -69,10 +72,18 @@ fun HorizontalPlayerCards(game: Game, useIcons: Boolean) {
 fun VerticalPlayerCards(game: Game) {
     Column {
         CenteredRow {
-            PlayerCard(game = game, player = game.players.first, useIcons = true)
+            PlayerCard(
+                game = game,
+                player = game.players.first,
+                useIcons = true
+            )
         }
         CenteredRow {
-            PlayerCard(game = game, player = game.players.second, useIcons = true)
+            PlayerCard(
+                game = game,
+                player = game.players.second,
+                useIcons = true
+            )
         }
     }
 }
@@ -162,7 +173,10 @@ fun Board(game: Game) {
                         for (row in game.cellArray) {
                             ExpandedRow {
                                 for (cell in row) {
-                                    CellView(game = game, cell = cell)
+                                    CellView(
+                                        game = game,
+                                        cell = cell
+                                    )
                                 }
                             }
                         }

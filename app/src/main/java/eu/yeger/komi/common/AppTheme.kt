@@ -1,4 +1,4 @@
-package eu.yeger.komi
+package eu.yeger.komi.common
 
 import androidx.compose.Composable
 import androidx.ui.core.dp
