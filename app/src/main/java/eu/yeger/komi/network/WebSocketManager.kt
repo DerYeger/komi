@@ -7,12 +7,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.*
 
-interface WebSocketMessageHandler {
-    fun onBind(webSocket: WebSocket)
-    fun onUnbind()
-    fun onMessage(webSocket: WebSocket, message: Message)
-}
-
 @Model
 object WebSocketManager : CoroutineScope {
     override val coroutineContext = Dispatchers.Main
@@ -31,27 +25,25 @@ object WebSocketManager : CoroutineScope {
     // Lifecycle
     //
 
-    fun start(): WebSocketManager {
-        terminate()
+    fun start() {
+        if (webSocket !== null) return
 
         error = null
         val request: Request = Request.Builder().url("ws://${BuildConfig.BACKEND_URL}").build()
         val client = OkHttpClient()
-        webSocket = client.newWebSocket(
-            request,
-            ManagedWebSocketListener
-        )
+        webSocket = client.newWebSocket(request, ManagedWebSocketListener)
         client.dispatcher().executorService().shutdown()
-        return this
     }
 
     fun terminate(code: Int = 1000, reason: String = "Shutdown") {
-        handlers.keys.forEach {
-            unbind(
-                it
-            )
-        }
+        handlers.keys.forEach { unbind(it) }
         webSocket?.close(code, reason)
+        webSocket = null
+    }
+
+    fun restart() {
+        terminate()
+        start()
     }
 
     //
@@ -82,9 +74,7 @@ object WebSocketManager : CoroutineScope {
 
     private object ManagedWebSocketListener : WebSocketListener() {
         override fun onMessage(webSocket: WebSocket, text: String) {
-            val message: Message? = moshi.adapter(
-                Message::class.java
-            ).fromJson(text)
+            val message: Message? = moshi.adapter(Message::class.java).fromJson(text)
             if (message !== null) {
                 handlers.values.forEach { it.onMessage(webSocket = webSocket, message = message) }
             }

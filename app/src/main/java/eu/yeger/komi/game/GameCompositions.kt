@@ -15,11 +15,7 @@ import androidx.ui.material.Button
 import androidx.ui.material.FloatingActionButton
 import androidx.ui.text.TextStyle
 import androidx.ui.tooling.preview.Preview
-import eu.yeger.komi.common.CenteredRow
-import eu.yeger.komi.common.ExpandedRow
-import eu.yeger.komi.common.KomiCard
-import eu.yeger.komi.common.ThemedPage
-import eu.yeger.komi.common.startGameWithConfiguration
+import eu.yeger.komi.common.*
 
 @Preview("GamePage")
 @Composable

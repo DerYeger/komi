@@ -11,7 +11,10 @@ class LobbyBrowserActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WebSocketManager.start().bind("lobby", LobbyBrowserMessageHandler(lobbyModel))
+        WebSocketManager.apply {
+            start()
+            bind("lobby", LobbyBrowserMessageHandler(lobbyModel))
+        }
         setContent {
             LobbyPage(lobbyModel)
         }

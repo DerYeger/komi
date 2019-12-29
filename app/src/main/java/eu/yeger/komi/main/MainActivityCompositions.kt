@@ -15,8 +15,6 @@ import androidx.ui.text.TextStyle
 import eu.yeger.komi.common.*
 import eu.yeger.komi.game.Game
 import eu.yeger.komi.lobby.LobbyBrowserActivity
-import eu.yeger.komi.common.startActivity
-import eu.yeger.komi.common.startGameWithConfiguration
 
 @Composable
 fun MainPage(activity: AppCompatActivity) {
