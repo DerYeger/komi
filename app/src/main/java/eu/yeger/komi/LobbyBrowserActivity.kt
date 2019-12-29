@@ -22,7 +22,7 @@ class LobbyBrowserActivity : AppCompatActivity() {
 
     private val lobbyModel = LobbyModel()
     private val request: Request =
-        Request.Builder().url("ws://${BuildConfig.BACKEND_URL}/lobby").build()
+        Request.Builder().url("ws://${BuildConfig.BACKEND_URL}").build()
     private val webSocket: WebSocket
 
     init {
