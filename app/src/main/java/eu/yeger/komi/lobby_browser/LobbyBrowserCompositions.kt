@@ -1,4 +1,4 @@
-package eu.yeger.komi.lobby
+package eu.yeger.komi.lobby_browser
 
 import androidx.compose.Composable
 import androidx.compose.unaryPlus

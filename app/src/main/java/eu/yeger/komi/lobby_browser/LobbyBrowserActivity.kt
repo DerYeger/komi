@@ -1,4 +1,4 @@
-package eu.yeger.komi.lobby
+package eu.yeger.komi.lobby_browser
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
@@ -13,7 +13,7 @@ class LobbyBrowserActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         WebSocketManager.apply {
             start()
-            bind("lobby", LobbyBrowserMessageHandler(lobbyBrowserModel))
+            bind("lobby", LobbyBrowserSubscriber(lobbyBrowserModel))
         }
         setContent {
             LobbyPage(lobbyBrowserModel)

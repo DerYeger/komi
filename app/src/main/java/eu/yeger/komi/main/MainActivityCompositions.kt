@@ -14,7 +14,7 @@ import androidx.ui.material.SliderPosition
 import androidx.ui.text.TextStyle
 import eu.yeger.komi.common.*
 import eu.yeger.komi.game.Game
-import eu.yeger.komi.lobby.LobbyBrowserActivity
+import eu.yeger.komi.lobby_browser.LobbyBrowserActivity
 
 @Composable
 fun MainPage(activity: AppCompatActivity) {

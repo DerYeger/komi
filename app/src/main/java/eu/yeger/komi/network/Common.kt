@@ -23,8 +23,12 @@ fun WebSocket.send(message: Message) {
     send(moshi.adapter(Message::class.java).toJson(message))
 }
 
+fun WebSocket.send(messages: List<Message>) {
+    messages.forEach { send(moshi.adapter(Message::class.java).toJson(it)) }
+}
+
 //
 // Exceptions
 //
 
-class WebSocketException(message: String) : Exception(message)
+class WebSocketManagerException(message: String) : Exception(message)

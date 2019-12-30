@@ -1,27 +1,25 @@
-package eu.yeger.komi.lobby
+package eu.yeger.komi.lobby_browser
 
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Types
 import eu.yeger.komi.network.Message
-import eu.yeger.komi.network.WebSocketMessageHandler
+import eu.yeger.komi.network.WebSocketSubscriber
 import eu.yeger.komi.network.moshi
-import eu.yeger.komi.network.send
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import okhttp3.WebSocket
 
-class LobbyBrowserMessageHandler(private val lobbyBrowserModel: LobbyBrowserModel) :
-    WebSocketMessageHandler {
+class LobbyBrowserSubscriber(private val lobbyBrowserModel: LobbyBrowserModel) :
+    WebSocketSubscriber {
     private val scope = CoroutineScope(Dispatchers.Main)
     private val lobbyListAdapter: JsonAdapter<List<Lobby>> =
         moshi.adapter(Types.newParameterizedType(List::class.java, Lobby::class.java))
 
-    override fun onBind() = Message("join", "Placeholder")
+    override fun onBind() = listOf(Message("join", "Placeholder"))
 
-    override fun onUnbind(): Message? = null
+    override fun onUnbind(): List<Message>? = null
 
-    override fun onMessage(message: Message): Message? {
+    override fun onMessage(message: Message): List<Message>? {
         return when (message.type) {
             "lobbies" -> lobbyListAdapter.fromJson(message.data)?.let { setLobbies(it) }
 //            "error" -> scope.launch{
@@ -42,7 +40,7 @@ class LobbyBrowserMessageHandler(private val lobbyBrowserModel: LobbyBrowserMode
         }
     }
 
-    private fun setLobbies(lobbies: List<Lobby>): Message? {
+    private fun setLobbies(lobbies: List<Lobby>): List<Message>? {
         scope.launch {
             lobbyBrowserModel.lobbies = lobbies
         }

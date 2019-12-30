@@ -13,10 +13,10 @@ object WebSocketManager : WebSocketListener() {
         object Inactive : State()
 
         class Active(val webSocket: WebSocket) : State() {
-            val handlers = ConcurrentHashMap<String, WebSocketMessageHandler>()
+            val subscribers = ConcurrentHashMap<String, WebSocketSubscriber>()
 
             fun terminate(code: Int, reason: String) {
-                handlers.keys.forEach { unbind(it) }
+                subscribers.keys.forEach { unbind(it) }
                 webSocket.close(code, reason)
             }
         }
@@ -39,14 +39,14 @@ object WebSocketManager : WebSocketListener() {
                 val webSocket = client.newWebSocket(request, this)
                 state = State.Active(webSocket = webSocket)
             }
-            is State.Active -> throw WebSocketException("WebSocketManager is active, unable to start")
+            is State.Active -> throw WebSocketManagerException("WebSocketManager is active, unable to start")
         }
     }
 
     @Synchronized
     fun terminate(code: Int = 1000, reason: String = "Shutdown") {
         when (val state = state) {
-            is State.Inactive -> throw WebSocketException("WebSocketManager is inactive, unable to terminate")
+            is State.Inactive -> throw WebSocketManagerException("WebSocketManager is inactive, unable to terminate")
             is State.Active -> {
                 this.state = State.Inactive
                 state.terminate(code = code, reason = reason)
@@ -57,7 +57,7 @@ object WebSocketManager : WebSocketListener() {
     @Synchronized
     fun restart() {
         when (state) {
-            is State.Inactive -> throw WebSocketException("WebSocketManager is inactive, unable to restart")
+            is State.Inactive -> throw WebSocketManagerException("WebSocketManager is inactive, unable to restart")
             is State.Active -> {
                 terminate()
                 start()
@@ -67,34 +67,37 @@ object WebSocketManager : WebSocketListener() {
 
     private fun onError(error: String, code: Int, reason: String) {
         when (val state = state) {
-            is State.Inactive -> throw WebSocketException("WebSocketManager is inactive, unable receive error")
             is State.Active -> {
-                state.handlers.values.forEach { it.onError(error) }
+                state.subscribers.values.forEach { it.onError(error) }
                 terminate(code, reason)
             }
         }
     }
 
     //
-    // Handler binding
+    // Subscriber binding
     //
 
     @Synchronized
-    fun bind(identifier: String, handler: WebSocketMessageHandler) {
+    fun bind(key: String, subscriber: WebSocketSubscriber) {
         when (val state = state) {
             is State.Active -> {
-                state.handlers[identifier] = handler
-                handler.onBind()?.also { send(it) }
+                state.subscribers[key]?.also { throw WebSocketManagerException("A WebSocketSubscriber with that key is already bound") }
+                state.subscribers[key] = subscriber
+                subscriber.onBind()?.also { send(it) }
             }
         }
     }
 
     @Synchronized
-    fun unbind(identifier: String) {
+    fun unbind(key: String) {
         when (val state = state) {
             is State.Active -> {
-                state.handlers.remove(identifier)?.onUnbind()?.also { send(it) }
-                if (state.handlers.isEmpty()) terminate()
+                when (val subscriber = state.subscribers.remove(key)) {
+                    null -> throw WebSocketManagerException("No WebSocketSubscriber with that key is bound")
+                    else -> subscriber.onUnbind()?.also { send(it) }
+                }
+                if (state.subscribers.isEmpty()) terminate()
             }
         }
     }
@@ -105,8 +108,15 @@ object WebSocketManager : WebSocketListener() {
 
     fun send(message: Message) {
         when (val state = state) {
-            is State.Inactive -> throw WebSocketException("WebSocketManager is inactive, unable to send message")
+            is State.Inactive -> throw WebSocketManagerException("WebSocketManager is inactive, unable to send message")
             is State.Active -> state.webSocket.send(message)
+        }
+    }
+
+    fun send(messages: List<Message>) {
+        when (val state = state) {
+            is State.Inactive -> throw WebSocketManagerException("WebSocketManager is inactive, unable to send messages")
+            is State.Active -> state.webSocket.send(messages)
         }
     }
 
@@ -119,7 +129,7 @@ object WebSocketManager : WebSocketListener() {
             is State.Active -> {
                 val message: Message? = moshi.adapter(Message::class.java).fromJson(text)
                 if (message !== null) {
-                    state.handlers.values.forEach {
+                    state.subscribers.values.forEach {
                         it.onMessage(message = message)?.also { message -> webSocket.send(message) }
                     }
                 }
