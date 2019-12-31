@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.ui.core.setContent
 import eu.yeger.komi.BuildConfig
-import eu.yeger.komi.network.KomiWebSocketManager
+import eu.yeger.komi.network.KomiWebSocketClient
 
 class LobbyBrowserActivity : AppCompatActivity() {
 
@@ -12,8 +12,8 @@ class LobbyBrowserActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        KomiWebSocketManager.apply {
-            start("ws://${BuildConfig.BACKEND_URL}")
+        KomiWebSocketClient.apply {
+            start()
             subscribe("lobby", LobbyBrowserSubscriber(lobbyBrowserModel))
         }
         setContent {
@@ -23,6 +23,6 @@ class LobbyBrowserActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        KomiWebSocketManager.unsubscribe("lobby")
+        KomiWebSocketClient.unsubscribe("lobby")
     }
 }

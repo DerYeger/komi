@@ -11,7 +11,7 @@ import androidx.ui.material.Button
 import androidx.ui.material.MaterialTheme
 import androidx.ui.text.TextStyle
 import eu.yeger.komi.common.*
-import eu.yeger.komi.network.KomiWebSocketManager
+import eu.yeger.komi.network.KomiWebSocketClient
 import eu.yeger.komi.network.Message
 
 @Composable
@@ -53,7 +53,7 @@ fun CreateLobbyRow(lobbyBrowserModel: LobbyBrowserModel) {
             Button(
                 text = "Create",
                 onClick = {
-                    KomiWebSocketManager.send(
+                    KomiWebSocketClient.send(
                         Message(
                             "createLobby",
                             lobbyBrowserModel.lobbyNameInput
@@ -89,7 +89,7 @@ fun LobbyView(lobby: Lobby) {
             Button(
                 text = "Join",
                 onClick = {
-                    KomiWebSocketManager.send(
+                    KomiWebSocketClient.send(
                         Message(
                             "joinLobby",
                             lobby.id.toString()
