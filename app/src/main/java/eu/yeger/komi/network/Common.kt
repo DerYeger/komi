@@ -16,19 +16,15 @@ val moshi: Moshi by lazy { Moshi.Builder().build() }
 data class Message(val type: String, val data: String)
 
 //
-// Extensions
+// Komi
 //
 
-fun WebSocket.send(message: Message) {
-    send(moshi.adapter(Message::class.java).toJson(message))
+object KomiMessageParser : WebSocketMessageParser<Message, Message> {
+    override fun parseString(message: String): Message? =
+        moshi.adapter(Message::class.java).fromJson(message)
+
+    override fun parseOutgoing(outgoing: Message): String =
+        moshi.adapter(Message::class.java).toJson(outgoing)
 }
 
-fun WebSocket.send(messages: List<Message>) {
-    messages.forEach { send(moshi.adapter(Message::class.java).toJson(it)) }
-}
-
-//
-// Exceptions
-//
-
-class WebSocketManagerException(message: String) : Exception(message)
+object KomiWebSocketManager : WebSocketManager<Message, Message>(KomiMessageParser)

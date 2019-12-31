@@ -10,7 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class LobbyBrowserSubscriber(private val lobbyBrowserModel: LobbyBrowserModel) :
-    WebSocketSubscriber {
+    WebSocketSubscriber<Message, Message> {
     private val scope = CoroutineScope(Dispatchers.Main)
     private val lobbyListAdapter: JsonAdapter<List<Lobby>> =
         moshi.adapter(Types.newParameterizedType(List::class.java, Lobby::class.java))

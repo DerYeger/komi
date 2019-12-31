@@ -3,6 +3,7 @@ package eu.yeger.komi.lobby_browser
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.ui.core.setContent
+import eu.yeger.komi.network.KomiWebSocketManager
 import eu.yeger.komi.network.WebSocketManager
 
 class LobbyBrowserActivity : AppCompatActivity() {
@@ -11,7 +12,7 @@ class LobbyBrowserActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WebSocketManager.apply {
+        KomiWebSocketManager.apply {
             start()
             bind("lobby", LobbyBrowserSubscriber(lobbyBrowserModel))
         }
@@ -22,6 +23,6 @@ class LobbyBrowserActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        WebSocketManager.unbind("lobby")
+        KomiWebSocketManager.unbind("lobby")
     }
 }

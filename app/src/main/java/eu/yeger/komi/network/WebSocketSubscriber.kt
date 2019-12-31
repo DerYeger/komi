@@ -1,24 +1,24 @@
 package eu.yeger.komi.network
 
-interface WebSocketSubscriber {
+interface WebSocketSubscriber<Incoming, Outgoing> {
     /**
      * Invoked after the handler has been bound.
      * @return Optional list of Messages to be sent to the active WebSocket, if one is active.
      */
-    fun onBind(): List<Message>?
+    fun onBind(): List<Outgoing>?
 
     /**
      * Invoked after the handles has been unbound.
      * @return Optional list of Messages to be sent to the active WebSocket, if one is active.
      */
-    fun onUnbind(): List<Message>?
+    fun onUnbind(): List<Outgoing>?
 
     /**
      * Invoked when the active WebSocket receives a message.
      * @param message Received message.
      * @return Optional list of response Messages.
      */
-    fun onMessage(message: Message): List<Message>?
+    fun onMessage(message: Incoming): List<Outgoing>?
 
     /**
      * Invoked when the active WebSocket receives a message.
