@@ -31,7 +31,6 @@ class LobbyBrowserSubscriber(private val lobbyBrowserModel: LobbyBrowserModel) :
 //            }
             else -> null
         }
-
     }
 
     override fun onError(error: String) {

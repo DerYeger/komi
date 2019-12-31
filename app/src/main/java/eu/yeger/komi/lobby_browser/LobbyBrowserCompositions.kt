@@ -13,7 +13,6 @@ import androidx.ui.text.TextStyle
 import eu.yeger.komi.common.*
 import eu.yeger.komi.network.KomiWebSocketManager
 import eu.yeger.komi.network.Message
-import eu.yeger.komi.network.WebSocketManager
 
 @Composable
 fun LobbyPage(lobbyBrowserModel: LobbyBrowserModel) {
