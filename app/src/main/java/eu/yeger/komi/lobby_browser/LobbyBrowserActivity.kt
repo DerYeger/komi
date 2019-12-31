@@ -3,7 +3,6 @@ package eu.yeger.komi.lobby_browser
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.ui.core.setContent
-import eu.yeger.komi.BuildConfig
 import eu.yeger.komi.network.KomiWebSocketClient
 
 class LobbyBrowserActivity : AppCompatActivity() {

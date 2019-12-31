@@ -3,14 +3,15 @@ package eu.yeger.komi.lobby_browser
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Types
 import eu.yeger.komi.network.Message
-import eu.yeger.komi.network.WebSocketSubscriber
+import eu.yeger.komi.network.WebSocketClient
 import eu.yeger.komi.network.moshi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class LobbyBrowserSubscriber(private val lobbyBrowserModel: LobbyBrowserModel) :
-    WebSocketSubscriber<Message, Message> {
+    WebSocketClient.Subscriber<Message, Message> {
+
     private val scope = CoroutineScope(Dispatchers.Main)
     private val lobbyListAdapter: JsonAdapter<List<Lobby>> =
         moshi.adapter(Types.newParameterizedType(List::class.java, Lobby::class.java))
