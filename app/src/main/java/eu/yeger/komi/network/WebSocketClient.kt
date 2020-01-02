@@ -17,7 +17,7 @@ abstract class WebSocketClient<InboundMessage, OutboundMessage>(
         object Terminating : State<Nothing, Nothing>()
 
         class Active<InboundMessage, OutboundMessage>(
-            val webSocket: WebSocket
+            internal val webSocket: WebSocket
         ) : State<InboundMessage, OutboundMessage>() {
             internal val subscribers =
                 ConcurrentHashMap<Subscriber<InboundMessage, OutboundMessage>, Subscriber<InboundMessage, OutboundMessage>>()
