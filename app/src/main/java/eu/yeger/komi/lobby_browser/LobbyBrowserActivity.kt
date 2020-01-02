@@ -8,10 +8,11 @@ import eu.yeger.komi.network.KomiWebSocketClient
 class LobbyBrowserActivity : AppCompatActivity() {
 
     private val lobbyBrowserModel = LobbyBrowserModel()
+    private val lobbyBrowserSubscriber = LobbyBrowserSubscriber(lobbyBrowserModel)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        KomiWebSocketClient.subscribe("lobby", LobbyBrowserSubscriber(lobbyBrowserModel))
+        KomiWebSocketClient.subscribe(lobbyBrowserSubscriber)
         setContent {
             LobbyPage(lobbyBrowserModel)
         }
@@ -19,6 +20,6 @@ class LobbyBrowserActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        KomiWebSocketClient.unsubscribe("lobby")
+        KomiWebSocketClient.unsubscribe(lobbyBrowserSubscriber)
     }
 }

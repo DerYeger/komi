@@ -20,7 +20,7 @@ abstract class WebSocketClient<InboundMessage, OutboundMessage>(
             val webSocket: WebSocket
         ) : State<InboundMessage, OutboundMessage>() {
             internal val subscribers =
-                ConcurrentHashMap<String, Subscriber<InboundMessage, OutboundMessage>>()
+                ConcurrentHashMap<Subscriber<InboundMessage, OutboundMessage>, Subscriber<InboundMessage, OutboundMessage>>()
         }
     }
 
@@ -88,50 +88,50 @@ abstract class WebSocketClient<InboundMessage, OutboundMessage>(
 
     interface Subscriber<in InboundMessage, out OutboundMessage> {
         /**
-         * Invoked after the handler has been bound.
-         * @return Optional list of Messages to be sent to the active WebSocket, if one is active.
+         * Invoked after the Subscriber has been subscribed.
+         * @return Optional collection of Messages to be sent to the active WebSocket, if one is active.
          */
-        fun onBind(): Collection<OutboundMessage>?
+        fun onSubscribe(): Collection<OutboundMessage>?
 
         /**
-         * Invoked after the handles has been unbound.
-         * @return Optional list of Messages to be sent to the active WebSocket, if one is active.
+         * Invoked after the Subscriber has been unsubscribed.
+         * @return Optional collection of Messages to be sent to the active WebSocket, if one is active.
          */
-        fun onUnbind(): Collection<OutboundMessage>?
+        fun onUnsubscribe(): Collection<OutboundMessage>?
 
         /**
          * Invoked when the active WebSocket receives a message.
          * @param message Received message.
-         * @return Optional list of response Messages.
+         * @return Optional collection of response Messages to be sent to the active WebSocket, if one is active.
          */
         fun onMessage(message: InboundMessage): Collection<OutboundMessage>?
 
         /**
-         * Invoked when the active WebSocket receives a message.
+         * Invoked when the active WebSocket encounters an error.
          * @param error Error message.
          */
         fun onError(error: String)
     }
 
     @Synchronized
-    fun subscribe(key: String, subscriber: Subscriber<InboundMessage, OutboundMessage>) {
+    fun subscribe(subscriber: Subscriber<InboundMessage, OutboundMessage>) {
         if (automatedLifecycle) startIfInactive()
         when (val state = state) {
             is State.Active -> {
-                state.subscribers[key]?.let { throw IllegalStateException("A WebSocketSubscriber with that key is already bound") }
-                state.subscribers[key] = subscriber
-                subscriber.onBind()?.let { send(it) }
+                state.subscribers[subscriber]?.let { throw IllegalStateException("Subscriber has been registered already") }
+                state.subscribers[subscriber] = subscriber
+                subscriber.onSubscribe()?.let { send(it) }
             }
         }
     }
 
     @Synchronized
-    fun unsubscribe(key: String) {
+    fun unsubscribe(subscriber: Subscriber<InboundMessage, OutboundMessage>) {
         when (val state = state) {
             is State.Active -> {
-                when (val subscriber = state.subscribers.remove(key)) {
-                    null -> throw IllegalStateException("No WebSocketSubscriber with that key is bound")
-                    else -> subscriber.onUnbind()?.let { send(it) }
+                when (val it = state.subscribers.remove(subscriber)) {
+                    null -> throw IllegalStateException("Subscriber is not registered")
+                    else -> it.onUnsubscribe()?.let { send(it) }
                 }
                 if (automatedLifecycle && state.subscribers.isEmpty()) terminate()
             }

@@ -16,11 +16,11 @@ class LobbyBrowserSubscriber(private val lobbyBrowserModel: LobbyBrowserModel) :
     private val lobbyListAdapter: JsonAdapter<List<Lobby>> =
         moshi.adapter(Types.newParameterizedType(List::class.java, Lobby::class.java))
 
-    override fun onBind() = listOf(Message("join", "Placeholder"))
+    override fun onSubscribe() = listOf(Message("join", "Placeholder"))
 
-    override fun onUnbind(): List<Message>? = null
+    override fun onUnsubscribe(): Collection<Message>? = null
 
-    override fun onMessage(message: Message): List<Message>? {
+    override fun onMessage(message: Message): Collection<Message>? {
         return when (message.type) {
             "lobbies" -> lobbyListAdapter.fromJson(message.data)?.let { setLobbies(it) }
 //            "error" -> scope.launch{
@@ -40,7 +40,7 @@ class LobbyBrowserSubscriber(private val lobbyBrowserModel: LobbyBrowserModel) :
         }
     }
 
-    private fun setLobbies(lobbies: List<Lobby>): List<Message>? {
+    private fun setLobbies(lobbies: List<Lobby>): Collection<Message>? {
         scope.launch {
             lobbyBrowserModel.lobbies = lobbies
         }
