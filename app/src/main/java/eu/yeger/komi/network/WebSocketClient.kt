@@ -5,7 +5,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 abstract class WebSocketClient<InboundMessage, OutboundMessage>(
     url: String,
-    private val webSocketFactory: WebSocket.Factory = OkHttpClient()
+    private val webSocketFactory: WebSocket.Factory = OkHttpClient(),
+    val automatedLifecycle: Boolean = true
 ) {
     //
     // Lifecycle
@@ -13,6 +14,7 @@ abstract class WebSocketClient<InboundMessage, OutboundMessage>(
 
     sealed class State<out InboundMessage, out OutboundMessage> {
         object Inactive : State<Nothing, Nothing>()
+        object Terminating : State<Nothing, Nothing>()
 
         class Active<InboundMessage, OutboundMessage>(
             val webSocket: WebSocket
@@ -34,6 +36,7 @@ abstract class WebSocketClient<InboundMessage, OutboundMessage>(
                 val webSocket = webSocketFactory.newWebSocket(request, listener)
                 state = State.Active(webSocket = webSocket)
             }
+            is State.Terminating -> throw IllegalStateException("WebSocketManager is terminating, unable to start")
             is State.Active -> throw IllegalStateException("WebSocketManager is active, unable to start")
         }
     }
@@ -41,7 +44,7 @@ abstract class WebSocketClient<InboundMessage, OutboundMessage>(
     @Synchronized
     fun startIfInactive() {
         when (state) {
-            is State.Active -> start()
+            is State.Inactive -> start()
         }
     }
 
@@ -50,9 +53,10 @@ abstract class WebSocketClient<InboundMessage, OutboundMessage>(
         when (val state = state) {
             is State.Inactive -> throw IllegalStateException("WebSocketManager is inactive, unable to terminate")
             is State.Active -> {
-                this.state = State.Inactive
+                this.state = State.Terminating
                 state.subscribers.keys.forEach { unsubscribe(it) }
                 state.webSocket.close(code, reason)
+                this.state = State.Inactive
             }
         }
     }
@@ -61,6 +65,7 @@ abstract class WebSocketClient<InboundMessage, OutboundMessage>(
     fun restart() {
         when (state) {
             is State.Inactive -> throw IllegalStateException("WebSocketManager is inactive, unable to restart")
+            is State.Terminating -> throw IllegalStateException("WebSocketManager is terminating, unable to restart")
             is State.Active -> {
                 terminate()
                 start()
@@ -110,6 +115,7 @@ abstract class WebSocketClient<InboundMessage, OutboundMessage>(
 
     @Synchronized
     fun subscribe(key: String, subscriber: Subscriber<InboundMessage, OutboundMessage>) {
+        if (automatedLifecycle) startIfInactive()
         when (val state = state) {
             is State.Active -> {
                 state.subscribers[key]?.let { throw IllegalStateException("A WebSocketSubscriber with that key is already bound") }
@@ -127,7 +133,7 @@ abstract class WebSocketClient<InboundMessage, OutboundMessage>(
                     null -> throw IllegalStateException("No WebSocketSubscriber with that key is bound")
                     else -> subscriber.onUnbind()?.let { send(it) }
                 }
-                if (state.subscribers.isEmpty()) terminate()
+                if (automatedLifecycle && state.subscribers.isEmpty()) terminate()
             }
         }
     }
@@ -146,15 +152,15 @@ abstract class WebSocketClient<InboundMessage, OutboundMessage>(
 
     fun send(message: OutboundMessage) {
         when (val state = state) {
-            is State.Inactive -> throw IllegalStateException("WebSocketManager is inactive, unable to send message")
             is State.Active -> state.webSocket.send(message)
+            else -> throw IllegalStateException("WebSocketManager is not active, unable to send message")
         }
     }
 
     fun send(messages: Collection<OutboundMessage>) {
         when (val state = state) {
-            is State.Inactive -> throw IllegalStateException("WebSocketManager is inactive, unable to send messages")
             is State.Active -> state.webSocket.send(messages)
+            else -> throw IllegalStateException("WebSocketManager is not active, unable to send messages")
         }
     }
 

@@ -11,10 +11,7 @@ class LobbyBrowserActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        KomiWebSocketClient.apply {
-            start()
-            subscribe("lobby", LobbyBrowserSubscriber(lobbyBrowserModel))
-        }
+        KomiWebSocketClient.subscribe("lobby", LobbyBrowserSubscriber(lobbyBrowserModel))
         setContent {
             LobbyPage(lobbyBrowserModel)
         }

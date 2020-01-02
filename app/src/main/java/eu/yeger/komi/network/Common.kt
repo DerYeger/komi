@@ -23,7 +23,8 @@ data class Message(val type: String, val data: String)
 
 object KomiWebSocketClient : WebSocketClient<Message, Message>(
     url = "ws://${BuildConfig.BACKEND_URL}",
-    webSocketFactory = OkHttpClient.Builder().connectTimeout(1, TimeUnit.SECONDS).build()
+    webSocketFactory = OkHttpClient.Builder().connectTimeout(1, TimeUnit.SECONDS).build(),
+    automatedLifecycle = true
 ) {
     override fun String.toInboundMessage(): Message? =
         moshi.adapter(Message::class.java).fromJson(this)
